@@ -86,6 +86,8 @@ impl HCommands {
         }
     }
 }
+
+#[derive(Debug)]
 pub enum HDataTypes {
     NumLiteral(i32),
     Pointer(usize),

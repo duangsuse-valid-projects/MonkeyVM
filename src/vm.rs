@@ -11,7 +11,7 @@ pub fn execute_program(program: &str, arg: Vec<CellType>) {
     let time_start = SystemTime::now();
     let prog_ast = parser::parse_program(program);
     //TODO :-( I don't know,either!
-    let result = do_emulate(prog_ast);
+    let result = do_emulate(prog_ast, arg);
     let time_end = SystemTime::now();
     let time_duration = time_end.duration_since(time_start).unwrap();
     println!(
@@ -22,7 +22,7 @@ pub fn execute_program(program: &str, arg: Vec<CellType>) {
     println!("{}", result);
 }
 
-fn do_emulate(hast: MonkeyAST) -> PResult {
+fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let ln = 1u32; //line executing
     let presult = PResult::new();
     presult
@@ -48,7 +48,7 @@ impl PResult {
     pub fn add_char(&mut self, output: char) {
         self.out_ascii.push(output);
     }
-    pub fn add_char_from_ascii(&mut self,output: CellType) {
+    pub fn add_char_from_ascii(&mut self, output: CellType) {
         self.add_char(from_u32(output as u32).unwrap());
     }
     pub fn put_step(&mut self, step: u32) {
@@ -63,9 +63,12 @@ mod tests {
         let mut pres = PResult::new();
         pres.add_char_from_ascii(0x0061);
         pres.put_step(2);
-        assert_eq!(format!("{}",pres),"numeric output: []
+        assert_eq!(
+            format!("{}", pres),
+            "numeric output: []
 ascii output:['a']
-steps:2");
+steps:2"
+        );
     }
     #[test]
     fn test_presult_beautifier() {
@@ -95,19 +98,23 @@ impl Display for PResult {
     }
 }
 #[derive(Debug)]
-struct Tag {
+pub struct Tag {
     id: i32,
     lo: u32,
 }
 impl Tag {
-
+    pub fn new(id: i32, lo: u32) -> Tag {
+        Tag { id: id, lo: lo }
+    }
 }
 #[derive(Debug)]
-struct TagManager {
+pub struct TagManager {
     tags: Vec<Tag>,
 }
 impl TagManager {
-
+    pub fn new() -> TagManager {
+        TagManager { tags: Vec::<Tag>::new() }
+    }
 }
 
 #[cfg(test)]
