@@ -7,7 +7,7 @@ use self::std_unicode::char::from_u32;
 use parser;
 use parser::MonkeyAST;
 use utils::memory::{CellType, Hmem};
-use utils::res::HCommands;
+use utils::res::{HCommands, HDataTypes};
 
 pub fn execute_program(program: &str, arg: Vec<CellType>) {
     println!("Executing program... args: {:?}", arg);
@@ -33,19 +33,43 @@ mod tests_proc {
     }
 }
 
+//Clone trait??
+fn borrowing_workaround(dat: &HDataTypes) -> HDataTypes {
+    match dat {
+        &HDataTypes::IndirectPointer(p) => HDataTypes::IndirectPointer(p),
+        &HDataTypes::NumLiteral(n) => HDataTypes::NumLiteral(n),
+        &HDataTypes::Pointer(p) => HDataTypes::Pointer(p),
+        &HDataTypes::Nil => HDataTypes::Nil,
+    }
+}
+
+//emulate hlang program with memory
 fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut ln = 0usize; //line executing
     let mut presult = PResult::new();
     let mut x: Option<CellType> = Some(0);
     let mut mem: Hmem = Hmem::new();
     let mut input = InputManager::new(arg);
-    let dat = &hast.DAT;
+    let mut steps = 0u32;
     loop {
         let command_current = &hast.CMD[ln];
-        //let data_current = &&hast.DAT[ln];
+        let data_current = borrowing_workaround(&hast.DAT[ln]);
         match command_current {
             &HCommands::ADD => {
-                x = Some(x.unwrap() + &hast.DAT[ln].get_value(&mem));
+                match data_current {
+                    HDataTypes::Nil => x = Some(x.unwrap()+1),
+                    HDataTypes::IndirectPointer(v) => {
+                        let val = &mem.get_cell_indirect(v)+1;
+                        &mem.put_cell_indirect(v,val);
+                    },
+                    HDataTypes::NumLiteral(v) => {
+
+                    },
+                    HDataTypes::Pointer(v) => {
+
+                    }
+                    _ => {},
+                }
             }
             &HCommands::AO => {
                 presult.add_char_from_ascii(x.unwrap());
@@ -54,45 +78,50 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 x = input.feed();
             }
             &HCommands::JMP => {
-                ln = hast.Tags.locate(&hast.DAT[ln].get_value(&mem)).unwrap() as usize;
+                ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
             }
             &HCommands::O => {
                 presult.add_num(x.unwrap());
             }
             &HCommands::QNJ => {
                 if x.unwrap() < 0 {
-                    ln = hast.Tags.locate(&hast.DAT[ln].get_value(&mem)).unwrap() as usize;
+                    ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::QNU => {
                 if x == None {
-                    ln = hast.Tags.locate(&hast.DAT[ln].get_value(&mem)).unwrap() as usize;
+                    ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::QPJ => {
                 if x.unwrap() > 0 {
-                    ln = hast.Tags.locate(&hast.DAT[ln].get_value(&mem)).unwrap() as usize;
+                    ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::QZJ => {
                 if x.unwrap() == 0 {
-                    ln = hast.Tags.locate(&hast.DAT[ln].get_value(&mem)).unwrap() as usize;
+                    ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::RAD => {
-                x = Some(&hast.DAT[ln].get_value(&mem) + 1);
+                x = Some(data_current.get_value(&mem) + 1);
             }
-            //s&HCommands::RED => x = Some(&hast.DAT[ln].get_value(&mem)),
-            &HCommands::RSB => x = Some(&hast.DAT[ln].get_value(&mem) - 1),
-            &HCommands::SUB => x = Some(x.unwrap() - &hast.DAT[ln].get_value(&mem)),
+            &HCommands::RED => x = Some(data_current.get_value(&mem)),
+            &HCommands::RSB => x = Some(data_current.get_value(&mem) - 1),
+            &HCommands::SUB => x = Some(x.unwrap() - data_current.get_value(&mem)),
             &HCommands::WRT => {
-                let ptr = *&hast.DAT[ln].get_value(&mem) as usize;
+                let ptr = data_current.get_value(&mem) as usize;
                 mem.put_cell(ptr, x.unwrap());
             }
             _ => panic!("unsupported command:{:?}", command_current),
         }
         ln += 1;
+        steps+=1;
+        if ln == hast.CMD.len() {
+            break;
+        }
     }
+    presult.put_step(steps);
     presult
 }
 
@@ -234,10 +263,10 @@ impl TagManager {
     pub fn new() -> TagManager {
         TagManager { tags: Vec::<Tag>::new() }
     }
-    pub fn locate(&self, id: &i32) -> Option<u32> {
+    pub fn locate(&self, id: i32) -> Option<u32> {
         let mut n: usize = 0;
         loop {
-            if &self.tags[n].get_id() == id {
+            if self.tags[n].get_id() == id {
                 break;
             }
             n += 1;

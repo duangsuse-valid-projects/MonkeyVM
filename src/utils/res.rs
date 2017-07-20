@@ -144,6 +144,36 @@ impl HDataTypes {
             Nil => unreachable!(),
         }
     }
+    //TODO useless,should be cleand up before release.
+    pub fn get_meta(self) -> WorkAroundPasser {
+        match self {
+            NumLiteral(x) => WorkAroundPasser::new(WorkAroundPasserType::NumL, x),
+            Pointer(x) => WorkAroundPasser::new(WorkAroundPasserType::Ptr, x as i32),
+            IndirectPointer(x) => WorkAroundPasser::new(WorkAroundPasserType::IPtr, x as i32),
+            Nil => WorkAroundPasser::new(WorkAroundPasserType::N, 0),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct WorkAroundPasser {
+    pub Type: WorkAroundPasserType,
+    pub value: i32,
+}
+impl WorkAroundPasser {
+    pub fn new(tp: WorkAroundPasserType, val: i32) -> WorkAroundPasser {
+        WorkAroundPasser {
+            Type: tp,
+            value: val,
+        }
+    }
+}
+#[derive(Debug)]
+pub enum WorkAroundPasserType {
+    N,
+    NumL,
+    Ptr,
+    IPtr,
 }
 /*
 pub fn Hcmd_as_array() -> [HCommands; 14] {
