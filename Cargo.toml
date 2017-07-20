@@ -1,5 +1,6 @@
 [package]
-name = "MonkeyVM"
+name = "monkey_vm"
+description = "simple tool for running monkey-lang programs"
 version = "0.1.0"
 authors = ["duangsuse <fedora-opensuse@outlook.com>"]
 
