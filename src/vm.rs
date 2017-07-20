@@ -97,6 +97,18 @@ impl Display for PResult {
         )
     }
 }
+
+#[cfg(test)]
+mod tests_tgmgr {
+    use vm::{TagManager, Tag};
+    #[test]
+    fn it_works() {
+        let mut tm = TagManager::new();
+        tm.add_tag(Tag::new(0, 2));
+        assert_eq!(tm.locate(0), Some(2));
+    }
+}
+
 #[derive(Debug)]
 pub struct Tag {
     id: i32,
@@ -106,6 +118,12 @@ impl Tag {
     pub fn new(id: i32, lo: u32) -> Tag {
         Tag { id: id, lo: lo }
     }
+    pub fn get_id(&self) -> i32 {
+        self.id
+    }
+    pub fn get_lo(&self) -> u32 {
+        self.lo
+    }
 }
 #[derive(Debug)]
 pub struct TagManager {
@@ -114,6 +132,19 @@ pub struct TagManager {
 impl TagManager {
     pub fn new() -> TagManager {
         TagManager { tags: Vec::<Tag>::new() }
+    }
+    pub fn locate(&self, id: i32) -> Option<u32> {
+        let mut n: usize = 0;
+        loop {
+            if self.tags[n].get_id() == id {
+                break;
+            }
+            n += 1;
+        }
+        Some(self.tags[n].get_lo())
+    }
+    pub fn add_tag(&mut self, tag: Tag) {
+        self.tags.push(tag);
     }
 }
 
