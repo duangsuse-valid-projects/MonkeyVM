@@ -1,4 +1,6 @@
 extern crate std_unicode;
+extern crate test;
+use self::test::Bencher;
 use std::fmt::{Display, Formatter, Result};
 use std::time::SystemTime;
 use self::std_unicode::char::from_u32;
@@ -100,12 +102,45 @@ impl Display for PResult {
 
 #[cfg(test)]
 mod tests_tgmgr {
-    use vm::{TagManager, Tag};
+    use vm::{TagManager, Tag, Bencher};
     #[test]
     fn it_works() {
         let mut tm = TagManager::new();
         tm.add_tag(Tag::new(0, 2));
         assert_eq!(tm.locate(0), Some(2));
+    }
+    #[test]
+    #[should_panic]
+    fn none_on_not_exist() {
+        let tm = TagManager::new();
+        tm.locate(3).unwrap();
+    }
+    #[bench]
+    fn tag_locate_speed(b: &mut Bencher) {
+        b.iter(move || tm_bench())
+    }
+    fn tm_bench() {
+        let mut tm = TagManager::new();
+        tm.add_tag(Tag::new(4, 384));
+        tm.add_tag(Tag::new(7, 384));
+        tm.add_tag(Tag::new(3428, 384));
+        tm.add_tag(Tag::new(354, 384));
+        tm.add_tag(Tag::new(324, 384));
+        tm.add_tag(Tag::new(65, 384));
+        tm.add_tag(Tag::new(422, 384));
+        tm.add_tag(Tag::new(234, 384));
+        tm.add_tag(Tag::new(24, 384));
+        tm.add_tag(Tag::new(9, 384));
+        tm.locate(4);
+        tm.locate(7);
+        tm.locate(3428);
+        tm.locate(354);
+        tm.locate(324);
+        tm.locate(65);
+        tm.locate(422);
+        tm.locate(234);
+        tm.locate(24);
+        tm.locate(9);
     }
 }
 
