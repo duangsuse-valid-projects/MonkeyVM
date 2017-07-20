@@ -1,4 +1,4 @@
-use std::env::{args,var};
+use std::env::{args, var};
 use std::io::prelude::*;
 use std::fs::File;
 
@@ -32,7 +32,7 @@ get source code on coding.net",
         ArgumentType::ExecuteProgram => {
             let mut program_text: String = String::new();
             arg.get_file().read_to_string(&mut program_text).unwrap();
-            let pargs : Vec<i32> = parsepargs();
+            let pargs: Vec<i32> = parsepargs();
             vm::execute_program(program_text.as_str(), pargs);
         }
     }
@@ -43,11 +43,11 @@ fn parsepargs() -> Vec<i32> {
             let mut pargs = Vec::<i32>::new();
             let pargs_txt = a.trim().split(',');
             for i in pargs_txt {
-                let tmp :i32 = i.parse::<i32>().unwrap();
+                let tmp: i32 = i.parse::<i32>().unwrap();
                 pargs.push(tmp);
             }
             pargs
-        },
+        }
         Err(e) => Vec::<i32>::new(),
     }
 }

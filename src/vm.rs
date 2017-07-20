@@ -5,7 +5,7 @@ use parser::MonkeyAST;
 use utils::memory::CellType;
 
 pub fn execute_program(program: &str, arg: Vec<CellType>) {
-    println!("Executing program... args: {:?}",arg);
+    println!("Executing program... args: {:?}", arg);
     let time_start = SystemTime::now();
     let prog_ast = parser::parse_program(program);
     //TODO :-( I don't know,either!
@@ -90,7 +90,40 @@ struct TagManager {
     tags: Vec<Tag>,
 }
 
+#[cfg(test)]
+mod tests_im {
+    #[test]
+    fn it_works() {
+        use vm::InputManager;
+        let test_vec = vec![0, 2, 3, 42, 1];
+        let mut im = InputManager::new(test_vec);
+        assert_eq!(im.feed().unwrap(), 0);
+        assert_eq!(im.feed().unwrap(), 2);
+        assert_eq!(im.feed().unwrap(), 3);
+        assert_eq!(im.feed().unwrap(), 42);
+        assert_eq!(im.feed().unwrap(), 1);
+        assert_eq!(im.feed(), None);
+    }
+}
+
 #[derive(Debug)]
 struct InputManager {
     Input: Vec<CellType>,
+    last: usize,
+}
+impl InputManager {
+    fn new(inp: Vec<CellType>) -> InputManager {
+        InputManager {
+            Input: inp,
+            last: 0,
+        }
+    }
+    fn feed(&mut self) -> Option<CellType> {
+        self.last += 1;
+        if self.last > self.Input.len() {
+            None
+        } else {
+            Some(self.Input[self.last - 1])
+        }
+    }
 }
