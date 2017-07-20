@@ -136,7 +136,7 @@ mod tests {
 }
 
 impl HDataTypes {
-    pub fn get_value(self, hmem: memory::Hmem) -> memory::CellType {
+    pub fn get_value(self, hmem: &memory::Hmem) -> memory::CellType {
         match self {
             NumLiteral(x) => x,
             Pointer(x) => hmem.get_cell(x),

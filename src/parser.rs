@@ -10,7 +10,7 @@ pub fn parse_program(program: &str) -> MonkeyAST {
 pub struct MonkeyAST {
     pub CMD: Vec<HCommands>,
     pub DAT: Vec<HDataTypes>,
-    Tags: TagManager,
+    pub Tags: TagManager,
 }
 impl MonkeyAST {
     fn new() -> MonkeyAST {
