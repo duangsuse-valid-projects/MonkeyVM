@@ -4,8 +4,8 @@ use parser;
 use parser::MonkeyAST;
 use utils::memory::CellType;
 
-pub fn execute_program(program: &str) {
-    println!("Executing program...");
+pub fn execute_program(program: &str, arg: Vec<CellType>) {
+    println!("Executing program... args: {:?}",arg);
     let time_start = SystemTime::now();
     let prog_ast = parser::parse_program(program);
     //TODO :-( I don't know,either!

@@ -1,4 +1,4 @@
-use std::env::args;
+use std::env::{args,var};
 use std::io::prelude::*;
 use std::fs::File;
 
@@ -20,7 +20,7 @@ a tool for running coding's monkey-lang code
 Usage:
 {} help to print help
 {} version to print version
-{} run [file] <args> to run a program
+<export PARGS=args>&&{} run [file]  to run a program
 get source code on coding.net",
                 VERSION,
                 binary_path,
@@ -32,10 +32,40 @@ get source code on coding.net",
         ArgumentType::ExecuteProgram => {
             let mut program_text: String = String::new();
             arg.get_file().read_to_string(&mut program_text).unwrap();
-            vm::execute_program(program_text.as_str());
+            let pargs : Vec<i32> = parsepargs();
+            vm::execute_program(program_text.as_str(), pargs);
         }
     }
 }
+fn parsepargs() -> Vec<i32> {
+    match var("PARGS") {
+        Ok(a) => {
+            let mut pargs = Vec::<i32>::new();
+            let pargs_txt = a.trim().split(',');
+            for i in pargs_txt {
+                let tmp :i32 = i.parse::<i32>().unwrap();
+                pargs.push(tmp);
+            }
+            pargs
+        },
+        Err(e) => Vec::<i32>::new(),
+    }
+}
+/*
+fn parsepargs() -> Vec<i32> {
+    let mut ret = Vec::<i32>::new();
+    let mut l = 0;
+    let i : &str;
+    for i in args().collect() {
+        if l > 3 {
+            let tmp : i32 = i.parse() ;
+            ret.push(tmp);
+        }
+        l+=1;
+    }
+    ret
+}
+*/
 //useless tests,but ... >_>
 #[cfg(test)]
 mod tests {
@@ -70,10 +100,10 @@ mod tests {
     }
 }
 fn parse_args(args: Vec<String>) -> Argument {
-    if args.len() == 2 || args.len() == 3 {
+    if args.len() >= 2 {
     } else {
         panic!(
-            "Error: wrong of number argument({} given,2 or 3 expected),use '{} help'to print help",
+            "Error: wrong of number argument({} given,1+ expected),use '{} help'to print help",
             args.len(),
             args[0]
         );
@@ -82,7 +112,7 @@ fn parse_args(args: Vec<String>) -> Argument {
         "help" => Argument::new(ArgumentType::PrintHelp),
         "version" => Argument::new(ArgumentType::PrintVersion),
         "run" => {
-            if args.len() != 3 {
+            if args.len() < 3 {
                 panic!("Error: please give a file to run");
             }
             if let Ok(f) = File::open(&args[2]) {
