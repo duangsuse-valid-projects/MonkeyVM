@@ -1,5 +1,7 @@
+extern crate std_unicode;
 use std::fmt::{Display, Formatter, Result};
 use std::time::SystemTime;
+use self::std_unicode::char::from_u32;
 use parser;
 use parser::MonkeyAST;
 use utils::memory::CellType;
@@ -46,6 +48,9 @@ impl PResult {
     pub fn add_char(&mut self, output: char) {
         self.out_ascii.push(output);
     }
+    pub fn add_char_from_ascii(&mut self,output: CellType) {
+        self.add_char(from_u32(output as u32).unwrap());
+    }
     pub fn put_step(&mut self, step: u32) {
         self.step = step;
     }
@@ -53,6 +58,15 @@ impl PResult {
 #[cfg(test)]
 mod tests {
     use vm::PResult;
+    #[test]
+    fn ascii_convert_works() {
+        let mut pres = PResult::new();
+        pres.add_char_from_ascii(0x0061);
+        pres.put_step(2);
+        assert_eq!(format!("{}",pres),"numeric output: []
+ascii output:['a']
+steps:2");
+    }
     #[test]
     fn test_presult_beautifier() {
         let mut pres = PResult::new();
@@ -85,9 +99,15 @@ struct Tag {
     id: i32,
     lo: u32,
 }
+impl Tag {
+
+}
 #[derive(Debug)]
 struct TagManager {
     tags: Vec<Tag>,
+}
+impl TagManager {
+
 }
 
 #[cfg(test)]

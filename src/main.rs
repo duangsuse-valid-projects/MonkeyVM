@@ -1,3 +1,5 @@
+#![feature(unicode)]
+
 use std::env::{args, var};
 use std::io::prelude::*;
 use std::fs::File;
