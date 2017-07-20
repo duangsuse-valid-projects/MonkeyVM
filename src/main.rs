@@ -20,7 +20,7 @@ a tool for running coding's monkey-lang code
 Usage:
 {} help to print help
 {} version to print version
-{} run [file] to run a program
+{} run [file] <args> to run a program
 get source code on coding.net",
                 VERSION,
                 binary_path,

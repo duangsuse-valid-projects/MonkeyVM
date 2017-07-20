@@ -80,3 +80,17 @@ impl Display for PResult {
         )
     }
 }
+#[derive(Debug)]
+struct Tag {
+    id: i32,
+    lo: u32,
+}
+#[derive(Debug)]
+struct TagManager {
+    tags: Vec<Tag>,
+}
+
+#[derive(Debug)]
+struct InputManager {
+    Input: Vec<CellType>,
+}
