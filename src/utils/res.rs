@@ -92,6 +92,7 @@ pub enum HDataTypes {
     NumLiteral(i32),
     Pointer(usize),
     IndirectPointer(usize),
+    Nil,
 }
 
 #[cfg(test)]
@@ -140,6 +141,7 @@ impl HDataTypes {
             NumLiteral(x) => x,
             Pointer(x) => hmem.get_cell(x),
             IndirectPointer(x) => hmem.get_cell_indirect(x),
+            Nil => unreachable!(),
         }
     }
 }

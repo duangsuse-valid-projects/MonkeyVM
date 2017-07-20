@@ -7,6 +7,7 @@ use self::std_unicode::char::from_u32;
 use parser;
 use parser::MonkeyAST;
 use utils::memory::CellType;
+use utils::res::HCommands;
 
 pub fn execute_program(program: &str, arg: Vec<CellType>) {
     println!("Executing program... args: {:?}", arg);
@@ -25,8 +26,31 @@ pub fn execute_program(program: &str, arg: Vec<CellType>) {
 }
 
 fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
-    let ln = 1u32; //line executing
+    let mut ln = 0usize; //line executing
     let presult = PResult::new();
+    let mut x: CellType = 0;
+    loop {
+        let command_current = &hast.CMD[ln];
+        let data_current = &hast.DAT[ln];
+        match command_current {
+            &HCommands::ADD => {}
+            &HCommands::AO => {}
+            &HCommands::I => {}
+            &HCommands::JMP => {}
+            &HCommands::O => {}
+            &HCommands::QNJ => {}
+            &HCommands::QNU => {}
+            &HCommands::QPJ => {}
+            &HCommands::QZJ => {}
+            &HCommands::RAD => {}
+            &HCommands::RED => {}
+            &HCommands::RSB => {}
+            &HCommands::SUB => {}
+            &HCommands::WRT => {}
+            _ => panic!("unsupport command:{:?}", command_current),
+        }
+        ln += 1;
+    }
     presult
 }
 

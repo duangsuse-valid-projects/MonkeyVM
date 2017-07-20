@@ -8,8 +8,8 @@ pub fn parse_program(program: &str) -> MonkeyAST {
 //use array instead of vector for benchmark(higer performace).
 #[derive(Debug)]
 pub struct MonkeyAST {
-    CMD: Vec<HCommands>,
-    DAT: Vec<HDataTypes>,
+    pub CMD: Vec<HCommands>,
+    pub DAT: Vec<HDataTypes>,
     Tags: TagManager,
 }
 impl MonkeyAST {
