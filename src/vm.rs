@@ -262,7 +262,7 @@ steps:2"
         println!("{}", pres);
         assert!(format!("{}", pres).contains(
             "numeric output: [0]
-ascii output:['f', 'o', 'o']
+ascii output: ['f', 'o', 'o']
 steps:8",
         ));
     }
@@ -271,7 +271,7 @@ impl Display for PResult {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(
             f,
-            "numeric output: {:?}\nascii output:{:?}\nsteps:{}",
+            "numeric output: {:?}\nascii output: {:?}\nsteps:{}",
             self.out_num,
             self.out_ascii,
             self.step
