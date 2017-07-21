@@ -57,7 +57,31 @@ mod tests_proc {
     }
     //TODO write more tests
     #[test]
-    fn ao_works() {}
+    fn ao_works() {
+        let mut hprog = MonkeyAST::new();
+        hprog.CMD.push(HCommands::RED);
+        hprog.DAT.push(HDataTypes::NumLiteral(0x0061)); //Unicode/ascii char a 0x0061
+        hprog.CMD.push(HCommands::AO);
+        hprog.DAT.push(HDataTypes::Nil);
+        let r = do_emulate(hprog, vec![]);
+        assert_eq!(r.get_ascii()[0], 'a');
+    }
+    #[test]
+    fn addsub_works() {
+        let mut hprog = MonkeyAST::new();
+        hprog.CMD.push(HCommands::ADD);
+        hprog.DAT.push(HDataTypes::Nil);
+        hprog.CMD.push(HCommands::WRT);
+        hprog.DAT.push(HDataTypes::Pointer(0)); //memory #0=1
+        hprog.CMD.push(HCommands::ADD);
+        hprog.DAT.push(HDataTypes::IndirectPointer(9)); //memory #0=2
+        hprog.CMD.push(HCommands::RED);
+        hprog.DAT.push(HDataTypes::Pointer(0));
+        hprog.CMD.push(HCommands::O);
+        hprog.DAT.push(HDataTypes::Nil);
+        let r = do_emulate(hprog, vec![]);
+        assert_eq!(r.get_num()[0], 2);
+    }
     #[test]
     fn jump_works() {
         let mut hprog = MonkeyAST::new();
@@ -124,7 +148,16 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             }
             &HCommands::AO => {
                 //println!("putting {} to asciiout", x.unwrap());
-                presult.add_char_from_ascii(x.unwrap());
+                match data_current {
+                    HDataTypes::Nil => presult.add_char_from_ascii(x.unwrap()),
+                    HDataTypes::IndirectPointer(i) => {
+                        presult.add_char_from_ascii(data_current.get_value(&mem))
+                    }
+                    HDataTypes::Pointer(p) => {
+                        presult.add_char_from_ascii(data_current.get_value(&mem))
+                    }
+                    HDataTypes::NumLiteral(n) => presult.add_char_from_ascii(n), 
+                }
             }
             &HCommands::I => {
                 //feed() returns Some(_) if there is a input remain,None if not.
@@ -137,7 +170,12 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             }
             &HCommands::O => {
                 //println!("putting {} to numout", x.unwrap());
-                presult.add_num(x.unwrap());
+                match data_current {
+                    HDataTypes::Nil => presult.add_num(x.unwrap()),
+                    HDataTypes::IndirectPointer(i) => presult.add_num(data_current.get_value(&mem)),
+                    HDataTypes::Pointer(p) => presult.add_num(data_current.get_value(&mem)),
+                    HDataTypes::NumLiteral(n) => presult.add_num(n), 
+                }
             }
             &HCommands::QNJ => {
                 if x.unwrap() < 0 {

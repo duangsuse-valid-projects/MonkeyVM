@@ -33,7 +33,7 @@ impl HCommands {
             &HCommands::QZJ => ":question::ghost::monkey:",
             &HCommands::RAD => ":thumbsup:",
             &HCommands::RED => ":eyes:",
-            &HCommands::RSB => ":thumbsdown",
+            &HCommands::RSB => ":thumbsdown:",
             &HCommands::SUB => ":see_no_evil:",
             &HCommands::WRT => ":memo:",
         }
