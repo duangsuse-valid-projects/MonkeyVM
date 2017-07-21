@@ -31,6 +31,7 @@ mod tests_proc {
     use parser::MonkeyAST;
     use vm::do_emulate;
     use vm::test::Bencher;
+    use vm::Tag;
     #[bench]
     fn intpret_speed(b: &mut Bencher) {
         b.iter(|| inprete_well())
@@ -56,13 +57,27 @@ mod tests_proc {
     }
     //TODO write more tests
     #[test]
-    fn add_works() {}
-    #[test]
     fn ao_works() {}
     #[test]
-    fn jump_works() {}
-    #[test]
-    fn tagmgr_works() {}
+    fn jump_works() {
+        let mut hprog = MonkeyAST::new();
+        hprog.Tags.add_tag(Tag::new(1, 0));
+        hprog.Tags.add_tag(Tag::new(2333, 5));
+        hprog.CMD.push(HCommands::I); //ln0 input
+        hprog.DAT.push(HDataTypes::Nil);
+        hprog.CMD.push(HCommands::QNU); //ln1 if x=Nil jump to ln5,end program
+        hprog.DAT.push(HDataTypes::NumLiteral(2333));
+        hprog.CMD.push(HCommands::ADD); //ln2 add one
+        hprog.DAT.push(HDataTypes::Nil);
+        hprog.CMD.push(HCommands::O); //ln3 output
+        hprog.DAT.push(HDataTypes::Nil);
+        hprog.CMD.push(HCommands::JMP); //ln4 jump back
+        hprog.DAT.push(HDataTypes::NumLiteral(1));
+        hprog.CMD.push(HCommands::ADD);
+        hprog.DAT.push(HDataTypes::Nil);
+        let r = do_emulate(hprog, vec![-1, 3, 5]);
+        assert_eq!(r.get_num(), [0, 4, 6]);
+    }
 }
 
 //Clone trait??
@@ -84,7 +99,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut mem: Hmem = Hmem::new();
     let mut input = InputManager::new(arg);
     let mut steps = 0u32;
-    let mut noplusline = false;
+    let mut noplusline = false; //alt. use continue; instead of noplusline=true;
     loop {
         if ln >= hast.CMD.len() {
             break;
