@@ -258,6 +258,7 @@ impl PResult {
     pub fn add_char(&mut self, output: char) {
         self.out_ascii.push(output);
     }
+    //TODO 2hex
     pub fn add_char_from_ascii(&mut self, output: CellType) {
         self.add_char(from_u32(output as u32).unwrap());
     }

@@ -116,7 +116,9 @@ fn parse_line(ln: &usize, ln_real: &usize, line: &str, target: &mut MonkeyAST) {
         target.CMD.push(HCommands::I);
         target.DAT.push(datparse(HCommands::I, line, ln));
     } else if line.starts_with(":poi") {
-        let trimd = line.replace(":point_right:", "");
+        let mut trimd = line.replace(":point_right:", "");
+        trimd = trimd.split("//").next().unwrap().to_string();
+        //println!("tagr trimed line: {}", trimd);
         target.Tags.add_tag(Tag::new(
             trimd.parse::<i32>().unwrap(),
             *ln_real as u32,
@@ -159,7 +161,8 @@ fn parse_line(ln: &usize, ln_real: &usize, line: &str, target: &mut MonkeyAST) {
     }
 }
 fn datparse(cmdtpe: HCommands, line: &str, ln: &usize) -> HDataTypes {
-    let tmp: String = line.replace(cmdtpe.to_str(), "");
+    let mut tmp: String = line.replace(cmdtpe.to_str(), "");
+    tmp = tmp.split("//").next().unwrap().to_string();
     //println!("strriped: {}", tmp);
     if let Ok(i) = tmp.parse::<i32>() {
         HDataTypes::NumLiteral(i)

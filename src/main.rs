@@ -101,6 +101,20 @@ mod tests {
     fn test_argparser_parses_run() {
         parse_args(vec!["mvm".to_string(), "run".to_string()]);
     }
+    #[test]
+    fn can_execute_hprog() {
+        use vm::execute_program;
+        let prog = "
+:point_right: 2 //tag 2
+//simple line comment
+:poultry_leg: //get input
+:question::mailbox_with_no_mail::monkey: 3
+:monkey_face: //add one
+:hankey: //output
+:point_right: 3 //exit tag
+";
+        execute_program(prog, vec![0, 3, -1, 21, 3, 2]);
+    }
 }
 fn parse_args(args: Vec<String>) -> Argument {
     if args.len() >= 2 {
