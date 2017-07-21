@@ -97,25 +97,36 @@ pub fn parse_program(prog: &str) -> MonkeyAST {
     for (n, l) in prog.lines().enumerate() {
         let line_trim = l.split("//").next().unwrap_or(l);
         if line_trim.trim() != "" {
-            parse_line(&n, &line_real, l.replace(" ", "").as_str(), &mut ret);
+            parse_line(&n, &mut line_real, l.replace(" ", "").as_str(), &mut ret);
             line_real += 1;
         }
     }
     println!("parse finish. result: {:?}", ret);
     ret
 }
-fn parse_line(ln: &usize, ln_real: &usize, line: &str, target: &mut MonkeyAST) {
+fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut MonkeyAST) {
     //println!("parsing {} ...", &line);
     if line.starts_with(":monkey_") {
         target.CMD.push(HCommands::ADD);
-        target.DAT.push(datparse(HCommands::ADD, line, ln));
+        target.DAT.push(
+            datparse(HCommands::ADD, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":l") {
         target.CMD.push(HCommands::AO);
-        target.DAT.push(datparse(HCommands::AO, line, ln));
+        target.DAT.push(
+            datparse(HCommands::AO, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":pou") {
         target.CMD.push(HCommands::I);
-        target.DAT.push(datparse(HCommands::I, line, ln));
+        target.DAT.push(
+            datparse(HCommands::I, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":poi") {
+        if line.contains("//") {
+            if ln_real != &0 {
+                *ln_real = *ln_real - 1;
+            }
+        }
         let mut trimd = line.replace(":point_right:", "");
         trimd = trimd.split("//").next().unwrap().to_string();
         //println!("tagr trimed line: {}", trimd);
@@ -125,42 +136,69 @@ fn parse_line(ln: &usize, ln_real: &usize, line: &str, target: &mut MonkeyAST) {
         ));
     } else if line.starts_with(":monkey:") {
         target.CMD.push(HCommands::JMP);
-        target.DAT.push(datparse(HCommands::JMP, line, ln));
+        target.DAT.push(
+            datparse(HCommands::JMP, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":h") {
         target.CMD.push(HCommands::O);
-        target.DAT.push(datparse(HCommands::O, line, ln));
+        target.DAT.push(
+            datparse(HCommands::O, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":question::s") {
         target.CMD.push(HCommands::QNJ);
-        target.DAT.push(datparse(HCommands::QNJ, line, ln));
+        target.DAT.push(
+            datparse(HCommands::QNJ, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":question::m") {
         target.CMD.push(HCommands::QNU);
-        target.DAT.push(datparse(HCommands::QNU, line, ln));
+        target.DAT.push(
+            datparse(HCommands::QNU, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":question::b") {
         target.CMD.push(HCommands::QPJ);
-        target.DAT.push(datparse(HCommands::QPJ, line, ln));
+        target.DAT.push(
+            datparse(HCommands::QPJ, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":question::g") {
         target.CMD.push(HCommands::QZJ);
-        target.DAT.push(datparse(HCommands::QZJ, line, ln));
+        target.DAT.push(
+            datparse(HCommands::QZJ, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":thumbsu") {
         target.CMD.push(HCommands::RAD);
-        target.DAT.push(datparse(HCommands::RAD, line, ln));
+        target.DAT.push(
+            datparse(HCommands::RAD, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":e") {
         target.CMD.push(HCommands::RED);
-        target.DAT.push(datparse(HCommands::RED, line, ln));
+        target.DAT.push(
+            datparse(HCommands::RED, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":thumbsd") {
         target.CMD.push(HCommands::RSB);
-        target.DAT.push(datparse(HCommands::RSB, line, ln));
+        target.DAT.push(
+            datparse(HCommands::RSB, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":s") {
         target.CMD.push(HCommands::SUB);
-        target.DAT.push(datparse(HCommands::SUB, line, ln));
+        target.DAT.push(
+            datparse(HCommands::SUB, line, ln, &mut ln_real),
+        );
     } else if line.starts_with(":m") {
         target.CMD.push(HCommands::WRT);
-        target.DAT.push(datparse(HCommands::WRT, line, ln));
+        target.DAT.push(
+            datparse(HCommands::WRT, line, ln, &mut ln_real),
+        );
     } else {
         panic!("fatal: can not parse command at line {}", ln + 1);
     }
 }
-fn datparse(cmdtpe: HCommands, line: &str, ln: &usize) -> HDataTypes {
+fn datparse(cmdtpe: HCommands, line: &str, ln: &usize, lnr: &mut usize) -> HDataTypes {
+    if line.contains("//") {
+        if lnr != &0 {
+            *lnr = *lnr - 1;
+        }
+    }
     let mut tmp: String = line.replace(cmdtpe.to_str(), "");
     tmp = tmp.split("//").next().unwrap().to_string();
     //println!("strriped: {}", tmp);
