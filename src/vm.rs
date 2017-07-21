@@ -247,7 +247,7 @@ mod tests {
         assert_eq!(
             format!("{}", pres),
             "numeric output: []
-ascii output:['a']
+ascii output: ['a']
 steps:2"
         );
     }

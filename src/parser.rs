@@ -2,6 +2,18 @@ use utils::res::{HDataTypes, HCommands};
 use vm::{TagManager, Tag};
 use std::str::SplitWhitespace;
 
+#[cfg(test)]
+mod parser_tests {
+    use parser::parse_program;
+    #[test]
+    fn it_works() {
+        let program = "
+        :point_right: 2
+        ";
+        let r = parse_program(program);
+    }
+}
+
 //TODO ~~impl. parser~~
 //TODO write test for parser
 pub fn parse_program(program: &str) -> MonkeyAST {
@@ -18,10 +30,10 @@ pub fn parse_program(program: &str) -> MonkeyAST {
     ret
 }
 fn parse_cmdata(l: &usize, n: &usize, line: &str, ast: &mut MonkeyAST) {
-    let mut line_splited = line.trim().split_whitespace();
+    let mut line_splited = line.split_whitespace();
     let (c, should_panic) = parse_cmd(n - l, line_splited.next().unwrap(), ast);
-    if c.is_some() {
-        &ast.CMD.push(c.unwrap());
+    if let Some(v) = c {
+        &ast.CMD.push(v);
     } else {
         if should_panic {
             panic!("can not parse command at line {}", n);
@@ -32,8 +44,9 @@ fn parse_cmdata(l: &usize, n: &usize, line: &str, ast: &mut MonkeyAST) {
     }
 }
 fn parse_cmd(l: usize, cmd: &str, ast: &mut MonkeyAST) -> (Option<HCommands>, bool) {
+    println!("execute {}:{}", l, cmd);
     if cmd.starts_with(":point_right:") {
-        let id: i32 = cmd.replace(":point_right:", "").parse().unwrap();
+        let id: i32 = cmd.replace(":point_right:", "").trim().parse().unwrap();
         ast.Tags.add_tag(Tag::new(id, l as u32));
         (None, false)
     } else {
@@ -41,6 +54,7 @@ fn parse_cmd(l: usize, cmd: &str, ast: &mut MonkeyAST) -> (Option<HCommands>, bo
     }
 }
 fn parse_data(data: &str) -> Option<HDataTypes> {
+    println!("pasing {}",data);
     let lit: Result<i32, _> = data.parse();
     if let Ok(l) = lit {
         Some(HDataTypes::NumLiteral(l))
@@ -50,10 +64,14 @@ fn parse_data(data: &str) -> Option<HDataTypes> {
             if data.replace(" ", "") == ":point_right::point_right:" {
                 Some(HDataTypes::IndirectPointer(val))
             } else {
-            Some(HDataTypes::Pointer(val))
+                Some(HDataTypes::Pointer(val))
             }
         } else {
-            None
+            if data.trim() == "" {
+                Some(HDataTypes::Nil)
+            } else {
+                None
+            }
         }
     }
 }
