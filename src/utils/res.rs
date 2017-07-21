@@ -103,15 +103,15 @@ mod tests {
     fn datatypes_gets_real_value() {
         let test_hmem = Hmem::new();
         let test_datatype = HDataTypes::NumLiteral(33);
-        assert_eq!(test_datatype.get_value(test_hmem), 33);
+        assert_eq!(test_datatype.get_value(&test_hmem), 33);
         let mut test_hmem = Hmem::new();
         test_hmem.put_cell(2, 22);
         let test_datatype_ptr = HDataTypes::Pointer(2);
-        assert_eq!(test_datatype_ptr.get_value(test_hmem), 22);
+        assert_eq!(test_datatype_ptr.get_value(&test_hmem), 22);
         let mut test_hmem = Hmem::new();
         test_hmem.put_cell_indirect(3, 33);
         let test_datatype_iptr = HDataTypes::IndirectPointer(3);
-        assert_eq!(test_datatype_iptr.get_value(test_hmem), 33);
+        assert_eq!(test_datatype_iptr.get_value(&test_hmem), 33);
     }
     #[test]
     fn command_parser_works() {

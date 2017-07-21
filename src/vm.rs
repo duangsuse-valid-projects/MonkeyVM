@@ -27,10 +27,42 @@ pub fn execute_program(program: &str, arg: Vec<CellType>) {
 
 #[cfg(test)]
 mod tests_proc {
+    use utils::res::{HCommands, HDataTypes};
+    use parser::MonkeyAST;
+    use vm::do_emulate;
+    use vm::test::Bencher;
+    #[bench]
+    fn intpret_speed(b: &mut Bencher) {
+        b.iter(|| inprete_well())
+    }
     #[test]
     fn inprete_well() {
-        let test_hprog = MonkeyAST::new();
+        let mut test_hprog = MonkeyAST::new();
+        //x=Some(0)
+        test_hprog.CMD.push(HCommands::ADD);
+        test_hprog.DAT.push(HDataTypes::NumLiteral(9)); //x=Some(9)
+        test_hprog.CMD.push(HCommands::ADD);
+        test_hprog.DAT.push(HDataTypes::Nil); //x=Some(10)
+        test_hprog.CMD.push(HCommands::WRT);
+        test_hprog.DAT.push(HDataTypes::IndirectPointer(2)); //Ptr#0=10
+        test_hprog.CMD.push(HCommands::ADD);
+        test_hprog.DAT.push(HDataTypes::Nil); //x=Some(11)
+        test_hprog.CMD.push(HCommands::RSB);
+        test_hprog.DAT.push(HDataTypes::Pointer(0)); //x=Some(9)
+        test_hprog.CMD.push(HCommands::O);
+        test_hprog.DAT.push(HDataTypes::Nil);
+        let r = do_emulate(test_hprog, vec![]);
+        assert_eq!(r.get_num()[0], 9);
     }
+    //TODO write more tests
+    #[test]
+    fn add_works() {}
+    #[test]
+    fn ao_works() {}
+    #[test]
+    fn jump_works() {}
+    #[test]
+    fn tagmgr_works() {}
 }
 
 //Clone trait??
@@ -44,6 +76,7 @@ fn borrowing_workaround(dat: &HDataTypes) -> HDataTypes {
 }
 
 //emulate hlang program with memory
+//TODO verbose error printing
 fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut ln = 0usize; //line executing
     let mut presult = PResult::new();
@@ -51,55 +84,67 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut mem: Hmem = Hmem::new();
     let mut input = InputManager::new(arg);
     let mut steps = 0u32;
+    let mut noplusline = false;
     loop {
+        if ln >= hast.CMD.len() {
+            break;
+        }
         let command_current = &hast.CMD[ln];
         let data_current = borrowing_workaround(&hast.DAT[ln]);
         match command_current {
             &HCommands::ADD => {
                 match data_current {
-                    HDataTypes::Nil => x = Some(x.unwrap()+1),
+                    //>_<WTF
+                    HDataTypes::Nil => x = Some(x.unwrap_or(0) + 1),
                     HDataTypes::IndirectPointer(v) => {
-                        let val = &mem.get_cell_indirect(v)+1;
-                        &mem.put_cell_indirect(v,val);
-                    },
-                    HDataTypes::NumLiteral(v) => {
-
-                    },
-                    HDataTypes::Pointer(v) => {
-
+                        let val = &mem.get_cell_indirect(v) + 1;
+                        &mem.put_cell_indirect(v, val);
                     }
-                    _ => {},
+                    HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) + v),
+                    HDataTypes::Pointer(v) => {
+                        let val = &mem.get_cell(v) + 1;
+                        &mem.put_cell(v, val);
+                    }
                 }
             }
             &HCommands::AO => {
+                println!("putting {} to asciiout", x.unwrap());
                 presult.add_char_from_ascii(x.unwrap());
             }
             &HCommands::I => {
+                //feed() returns Some(_) if there is a input remain,None if not.
                 x = input.feed();
+                println!("putting {:?} to x", x);
             }
             &HCommands::JMP => {
+                noplusline = true;
                 ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
             }
             &HCommands::O => {
+                println!("putting {} to numout", x.unwrap());
                 presult.add_num(x.unwrap());
             }
             &HCommands::QNJ => {
                 if x.unwrap() < 0 {
+                    noplusline = true;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::QNU => {
                 if x == None {
+                    noplusline = true;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::QPJ => {
                 if x.unwrap() > 0 {
+                    noplusline = true;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
             &HCommands::QZJ => {
                 if x.unwrap() == 0 {
+                    noplusline = true;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 }
             }
@@ -108,18 +153,33 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             }
             &HCommands::RED => x = Some(data_current.get_value(&mem)),
             &HCommands::RSB => x = Some(data_current.get_value(&mem) - 1),
-            &HCommands::SUB => x = Some(x.unwrap() - data_current.get_value(&mem)),
+            &HCommands::SUB => {
+                match data_current {
+                    //>_<WTF
+                    HDataTypes::Nil => x = Some(x.unwrap_or(0) - 1),
+                    HDataTypes::IndirectPointer(v) => {
+                        let val = &mem.get_cell_indirect(v) - 1;
+                        &mem.put_cell_indirect(v, val);
+                    }
+                    HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) - v),
+                    HDataTypes::Pointer(v) => {
+                        let val = &mem.get_cell(v) - 1;
+                        &mem.put_cell(v, val);
+                    }
+                }
+            }
             &HCommands::WRT => {
                 let ptr = data_current.get_value(&mem) as usize;
                 mem.put_cell(ptr, x.unwrap());
             }
             _ => panic!("unsupported command:{:?}", command_current),
         }
-        ln += 1;
-        steps+=1;
-        if ln == hast.CMD.len() {
-            break;
+        if noplusline {
+            noplusline = false;
+        } else {
+            ln += 1;
         }
+        steps += 1;
     }
     presult.put_step(steps);
     presult
@@ -150,6 +210,15 @@ impl PResult {
     }
     pub fn put_step(&mut self, step: u32) {
         self.step = step;
+    }
+    pub fn get_step(&self) -> u32 {
+        self.step
+    }
+    pub fn get_num(self) -> Vec<CellType> {
+        self.out_num
+    }
+    pub fn get_ascii(self) -> Vec<char> {
+        self.out_ascii
     }
 }
 #[cfg(test)]
@@ -269,9 +338,16 @@ impl TagManager {
             if self.tags[n].get_id() == id {
                 break;
             }
+            if n == self.tags.len() - 1 {
+                break;
+            }
             n += 1;
         }
-        Some(self.tags[n].get_lo())
+        if n == self.tags.len() {
+            None
+        } else {
+            Some(self.tags[n].get_lo())
+        }
     }
     pub fn add_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
@@ -280,9 +356,9 @@ impl TagManager {
 
 #[cfg(test)]
 mod tests_im {
+    use vm::InputManager;
     #[test]
     fn it_works() {
-        use vm::InputManager;
         let test_vec = vec![0, 2, 3, 42, 1];
         let mut im = InputManager::new(test_vec);
         assert_eq!(im.feed().unwrap(), 0);
