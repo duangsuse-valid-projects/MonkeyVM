@@ -123,20 +123,20 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 }
             }
             &HCommands::AO => {
-                println!("putting {} to asciiout", x.unwrap());
+                //println!("putting {} to asciiout", x.unwrap());
                 presult.add_char_from_ascii(x.unwrap());
             }
             &HCommands::I => {
                 //feed() returns Some(_) if there is a input remain,None if not.
                 x = input.feed();
-                println!("putting {:?} to x", x);
+                //println!("putting {:?} to x", x);
             }
             &HCommands::JMP => {
                 noplusline = true;
                 ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
             }
             &HCommands::O => {
-                println!("putting {} to numout", x.unwrap());
+                //println!("putting {} to numout", x.unwrap());
                 presult.add_num(x.unwrap());
             }
             &HCommands::QNJ => {
