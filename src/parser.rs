@@ -122,12 +122,12 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
             datparse(HCommands::I, line, ln, &mut ln_real),
         );
     } else if line.starts_with(":poi") {
-        if line.contains("//") {
+        let mut trimd = line.replace(":point_right:", "");
+        if trimd.split("//").next().unwrap() == "" {
             if ln_real != &0 {
                 *ln_real = *ln_real - 1;
             }
         }
-        let mut trimd = line.replace(":point_right:", "");
         trimd = trimd.split("//").next().unwrap().to_string();
         //println!("tagr trimed line: {}", trimd);
         target.Tags.add_tag(Tag::new(
@@ -194,12 +194,12 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
     }
 }
 fn datparse(cmdtpe: HCommands, line: &str, ln: &usize, lnr: &mut usize) -> HDataTypes {
-    if line.contains("//") {
+    let mut tmp: String = line.replace(cmdtpe.to_str(), "");
+    if tmp.split("//").next().unwrap() == "" {
         if lnr != &0 {
             *lnr = *lnr - 1;
         }
     }
-    let mut tmp: String = line.replace(cmdtpe.to_str(), "");
     tmp = tmp.split("//").next().unwrap().to_string();
     //println!("strriped: {}", tmp);
     if let Ok(i) = tmp.parse::<i32>() {
