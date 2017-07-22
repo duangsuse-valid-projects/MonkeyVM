@@ -1,4 +1,5 @@
 //monkey-lang memory implemention
+use std::fmt::{Display, Formatter, Result};
 use utils::error::check_idpointer_validate;
 
 pub type CellType = i32;
@@ -69,5 +70,18 @@ impl Hmem {
         let cell_contains = self.get_cell(cell);
         check_idpointer_validate(cell_contains).unwrap();
         cell_contains as usize
+    }
+    pub fn pretty(&self) -> String {
+        let mut ret = String::new();
+        let mut valcel_list = Vec::<usize>::new();
+        for (n, c) in self.memory.iter().enumerate() {
+            if c != &0 {
+                valcel_list.push(n);
+            }
+        }
+        for p in valcel_list {
+            ret += format!("mem#{}:{}", p, self.memory[p]).as_str();
+        }
+        ret
     }
 }

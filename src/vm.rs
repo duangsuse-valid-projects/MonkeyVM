@@ -123,6 +123,8 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut mem: Hmem = Hmem::new();
     let mut input = InputManager::new(arg);
     let mut steps = 0u32;
+    let mut jumps = 0u32;
+    let mut jumps_t = 0u32;
     let mut noplusline = false; //alt. use continue; instead of noplusline=true;
     loop {
         if ln >= hast.CMD.len() {
@@ -172,7 +174,16 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             }
             &HCommands::JMP => {
                 noplusline = true;
+                jumps += 1;
                 ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
+                if jumps > 10000 {
+                    println!(
+                        "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                        ln
+                    );
+                    jumps_t += jumps;
+                    jumps = 0;
+                }
             }
             &HCommands::O => {
                 //println!("putting {} to numout", x.unwrap());
@@ -192,25 +203,61 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             &HCommands::QNJ => {
                 if x.unwrap() < 0 {
                     noplusline = true;
+                    jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
+                    if jumps > 10000 {
+                        println!(
+                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            ln
+                        );
+                        jumps_t += jumps;
+                        jumps = 0;
+                    }
                 }
             }
             &HCommands::QNU => {
                 if x == None {
                     noplusline = true;
+                    jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
+                    if jumps > 10000 {
+                        println!(
+                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            ln
+                        );
+                        jumps_t += jumps;
+                        jumps = 0;
+                    }
                 }
             }
             &HCommands::QPJ => {
                 if x.unwrap() > 0 {
                     noplusline = true;
+                    jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
+                    if jumps > 10000 {
+                        println!(
+                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            ln
+                        );
+                        jumps_t += jumps;
+                        jumps = 0;
+                    }
                 }
             }
             &HCommands::QZJ => {
                 if x.unwrap() == 0 {
                     noplusline = true;
+                    jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
+                    if jumps > 10000 {
+                        println!(
+                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            ln
+                        );
+                        jumps_t += jumps;
+                        jumps = 0;
+                    }
                 }
             }
             &HCommands::RAD => {
@@ -279,6 +326,13 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
         steps += 1;
     }
     presult.put_step(steps);
+    println!(
+        "VM core: total jump count: {} ,end line: {} ,memory snap: {} ,x: {:?}",
+        jumps_t + jumps,
+        ln,
+        mem.pretty(),
+        x
+    );
     presult
 }
 

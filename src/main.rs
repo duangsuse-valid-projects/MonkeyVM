@@ -9,7 +9,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.1.1";
+const VERSION: &str = "0.1.2";
 fn main() {
     let arg = parse_args(args().collect());
     //println!("{:?}",arg.type_class1);
@@ -23,7 +23,7 @@ a tool for running coding's monkey-lang code
 Usage:
 {} help to print help
 {} version to print version
-<export PARGS=args>&&{} run [file]  to run a program
+<PARGS=args>&&{} run [file]  to run a program
 get source code on coding.net",
                 VERSION,
                 binary_path,
