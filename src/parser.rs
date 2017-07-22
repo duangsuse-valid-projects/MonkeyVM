@@ -13,7 +13,7 @@ mod parser_tests {
     fn it_works() {
         let program = "
         :point_right: 2
-        :see_no_evil:
+        :see_no_evil::point_right:3:point_right:
         :see_no_evil:3
         :hankey:
         ";
@@ -31,8 +31,8 @@ mod parser_tests {
             _ => panic!("parser err, expected O but {} given", r.CMD[2].to_str()),
         }
         match r.DAT[0] {
-            HDataTypes::Nil => {}
-            _ => panic!("parser err, expected Nil but {:?} given", r.DAT[0]),
+            HDataTypes::IndirectPointer(3) => {}
+            _ => panic!("parser err, expected IPtr(3) but {:?} given", r.DAT[0]),
         }
         match r.DAT[1] { 
             HDataTypes::NumLiteral(3) => {}
@@ -212,8 +212,8 @@ fn datparse(cmdtpe: HCommands, line: &str, ln: &usize, lnr: &mut usize) -> HData
     if let Ok(i) = tmp.parse::<i32>() {
         HDataTypes::NumLiteral(i)
     } else {
-        if tmp.starts_with(":point_right::") {
-            let replaced = tmp.replace(":point_right::point_right:", "");
+        if tmp.starts_with(":point_right:") && tmp.ends_with(":point_right:") {
+            let replaced = tmp.replace(":point_right:", "");
             HDataTypes::IndirectPointer(replaced.parse::<usize>().unwrap())
         } else {
             if tmp == "" {

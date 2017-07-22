@@ -53,7 +53,7 @@ mod tests_proc {
         test_hprog.CMD.push(HCommands::O);
         test_hprog.DAT.push(HDataTypes::Nil);
         let r = do_emulate(test_hprog, vec![]);
-        assert_eq!(r.get_num()[0], 9);
+        assert_eq!(r.get_num()[0], 11);
     }
     //TODO write more tests
     #[test]
@@ -80,7 +80,7 @@ mod tests_proc {
         hprog.CMD.push(HCommands::O);
         hprog.DAT.push(HDataTypes::Nil);
         let r = do_emulate(hprog, vec![]);
-        assert_eq!(r.get_num()[0], 2);
+        assert_eq!(r.get_num()[0], 1);
     }
     #[test]
     fn jump_works() {
@@ -137,19 +137,25 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                     HDataTypes::Nil => x = Some(x.unwrap_or(0) + 1),
                     HDataTypes::IndirectPointer(v) => {
                         let val = &mem.get_cell_indirect(v) + 1;
-                        &mem.put_cell_indirect(v, val);
+                        x = Some(val);
                     }
                     HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) + v),
                     HDataTypes::Pointer(v) => {
                         let val = &mem.get_cell(v) + 1;
-                        &mem.put_cell(v, val);
+                        x = Some(val);
                     }
                 }
             }
             &HCommands::AO => {
                 //println!("putting {} to asciiout", x.unwrap());
                 match data_current {
-                    HDataTypes::Nil => presult.add_char_from_ascii(x.unwrap()),
+                    HDataTypes::Nil => {
+                        if x.is_none() {
+                            println!("WARN: attempt to output when x is a None value near {}", ln);
+                        } else {
+                            presult.add_char_from_ascii(x.unwrap());
+                        }
+                    }
                     HDataTypes::IndirectPointer(i) => {
                         presult.add_char_from_ascii(data_current.get_value(&mem))
                     }
@@ -171,7 +177,13 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             &HCommands::O => {
                 //println!("putting {} to numout", x.unwrap());
                 match data_current {
-                    HDataTypes::Nil => presult.add_num(x.unwrap()),
+                    HDataTypes::Nil => {
+                        if x.is_none() {
+                            println!("WARN: attempt to output when x is a None value near {}", ln);
+                        } else {
+                            presult.add_num(x.unwrap());
+                        }
+                    }
                     HDataTypes::IndirectPointer(i) => presult.add_num(data_current.get_value(&mem)),
                     HDataTypes::Pointer(p) => presult.add_num(data_current.get_value(&mem)),
                     HDataTypes::NumLiteral(n) => presult.add_num(n), 
@@ -202,28 +214,60 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 }
             }
             &HCommands::RAD => {
-                x = Some(data_current.get_value(&mem) + 1);
+                match data_current {
+                    HDataTypes::Pointer(p) => {
+                        let val = &mem.get_cell(p) + 1;
+                        &mem.put_cell(p, val);
+                    }
+                    HDataTypes::IndirectPointer(p) => {
+                        let val = &mem.get_cell_indirect(p) + 1;
+                        &mem.put_cell_indirect(p, val);
+                    } 
+                    HDataTypes::NumLiteral(_) => {
+                        println!("WARN: trying to RAD without pointer {}", ln)
+                    }
+                    HDataTypes::Nil => {
+                        println!("WARN: trying to RAD without any param near {}", ln)
+                    }
+                }
             }
             &HCommands::RED => x = Some(data_current.get_value(&mem)),
-            &HCommands::RSB => x = Some(data_current.get_value(&mem) - 1),
+            &HCommands::RSB => {
+                match data_current {
+                    HDataTypes::Pointer(p) => {
+                        let val = &mem.get_cell(p) - 1;
+                        &mem.put_cell(p, val);
+                    }
+                    HDataTypes::IndirectPointer(p) => {
+                        let val = &mem.get_cell_indirect(p) - 1;
+                        &mem.put_cell_indirect(p, val);
+                    } 
+                    HDataTypes::NumLiteral(_) => {
+                        println!("WARN: trying to RSB without pointer {}", ln)
+                    }
+                    HDataTypes::Nil => {
+                        println!("WARN: trying to RSB without any param near {}", ln)
+                    }
+                }
+            }
             &HCommands::SUB => {
                 match data_current {
                     //>_<WTF
                     HDataTypes::Nil => x = Some(x.unwrap_or(0) - 1),
                     HDataTypes::IndirectPointer(v) => {
                         let val = &mem.get_cell_indirect(v) - 1;
-                        &mem.put_cell_indirect(v, val);
+                        x = Some(val);
                     }
                     HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) - v),
                     HDataTypes::Pointer(v) => {
                         let val = &mem.get_cell(v) - 1;
-                        &mem.put_cell(v, val);
+                        x = Some(val);
                     }
                 }
             }
             &HCommands::WRT => {
                 let ptr = data_current.get_value(&mem) as usize;
-                mem.put_cell(ptr, x.unwrap());
+                mem.put_cell(ptr, x.unwrap_or(0));
             }
             _ => panic!("unsupported command:{:?}", command_current),
         }

@@ -9,7 +9,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.1.0";
+const VERSION: &str = "0.1.1";
 fn main() {
     let arg = parse_args(args().collect());
     //println!("{:?}",arg.type_class1);
