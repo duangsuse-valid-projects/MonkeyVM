@@ -119,7 +119,7 @@ fn borrowing_workaround(dat: &HDataTypes) -> HDataTypes {
 fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut ln = 0usize; //line executing
     let mut presult = PResult::new();
-    let mut x: Option<CellType> = Some(0);
+    let mut x: Option<CellType> = None;
     let mut mem: Hmem = Hmem::new();
     let mut input = InputManager::new(arg);
     let mut steps = 0u32;
@@ -152,7 +152,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 //println!("putting {} to asciiout", x.unwrap());
                 match data_current {
                     HDataTypes::Nil => {
-                        if x.is_none() {
+                        if x == None {
                             println!("WARN: attempt to output when x is a None value near {}", ln);
                         } else {
                             presult.add_char_from_ascii(x.unwrap());
