@@ -80,7 +80,7 @@ impl Hmem {
             }
         }
         for p in valcel_list {
-            ret += format!("mem#{}:{}", p, self.memory[p]).as_str();
+            ret += format!("#{}:{}", p, self.memory[p]).as_str();
         }
         ret
     }
