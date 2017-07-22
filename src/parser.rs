@@ -97,8 +97,13 @@ pub fn parse_program(prog: &str) -> MonkeyAST {
     for (n, l) in prog.lines().enumerate() {
         let line_trim = l.split("//").next().unwrap_or(l);
         if line_trim.trim() != "" {
+            //println!("{} gived to parse_line", line_trim.replace(" ", ""));
             parse_line(&n, &mut line_real, l.replace(" ", "").as_str(), &mut ret);
-            line_real += 1;
+            /*if !l.replace(" ", "").starts_with(":point_ri") {
+                line_real += 1;
+            } else {
+                println!("ignoring point_right");
+            }*/
         }
     }
     println!("parse finish. result: {:?}", ret);
@@ -106,6 +111,7 @@ pub fn parse_program(prog: &str) -> MonkeyAST {
 }
 fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut MonkeyAST) {
     //println!("parsing {} ...", &line);
+    *ln_real = target.CMD.len();
     if line.starts_with(":monkey_") {
         target.CMD.push(HCommands::ADD);
         target.DAT.push(
@@ -123,11 +129,12 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
         );
     } else if line.starts_with(":poi") {
         let mut trimd = line.replace(":point_right:", "");
-        if trimd.split("//").next().unwrap() == "" {
+        /*if trimd.split("//").next().unwrap() == "" {
             if ln_real != &0 {
                 *ln_real = *ln_real - 1;
             }
-        }
+        }*/
+        //*ln_real -= 1;
         trimd = trimd.split("//").next().unwrap().to_string();
         //println!("tagr trimed line: {}", trimd);
         target.Tags.add_tag(Tag::new(
@@ -195,11 +202,11 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
 }
 fn datparse(cmdtpe: HCommands, line: &str, ln: &usize, lnr: &mut usize) -> HDataTypes {
     let mut tmp: String = line.replace(cmdtpe.to_str(), "");
-    if tmp.split("//").next().unwrap() == "" {
+    /*if tmp.split("//").next().unwrap() == "" {
         if lnr != &0 {
             *lnr = *lnr - 1;
         }
-    }
+    }*/
     tmp = tmp.split("//").next().unwrap().to_string();
     //println!("strriped: {}", tmp);
     if let Ok(i) = tmp.parse::<i32>() {
