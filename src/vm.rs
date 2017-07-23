@@ -1,9 +1,10 @@
 extern crate std_unicode;
 extern crate test;
-use self::test::Bencher;
 use std::fmt::{Display, Formatter, Result};
 use std::time::SystemTime;
 use self::std_unicode::char::from_u32;
+#[allow(unused_imports)]
+use vm::test::Bencher;
 use parser;
 use parser::MonkeyAST;
 use utils::memory::{CellType, Hmem};
@@ -158,10 +159,10 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                             presult.add_char_from_ascii(x.unwrap());
                         }
                     }
-                    HDataTypes::IndirectPointer(i) => {
+                    HDataTypes::IndirectPointer(_) => {
                         presult.add_char_from_ascii(data_current.get_value(&mem))
                     }
-                    HDataTypes::Pointer(p) => {
+                    HDataTypes::Pointer(_) => {
                         presult.add_char_from_ascii(data_current.get_value(&mem))
                     }
                     HDataTypes::NumLiteral(n) => presult.add_char_from_ascii(n), 
@@ -178,7 +179,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 if jumps > 10000 {
                     println!(
-                        "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                        "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
                         ln
                     );
                     jumps_t += jumps;
@@ -195,8 +196,8 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                             presult.add_num(x.unwrap());
                         }
                     }
-                    HDataTypes::IndirectPointer(i) => presult.add_num(data_current.get_value(&mem)),
-                    HDataTypes::Pointer(p) => presult.add_num(data_current.get_value(&mem)),
+                    HDataTypes::IndirectPointer(_) => presult.add_num(data_current.get_value(&mem)),
+                    HDataTypes::Pointer(_) => presult.add_num(data_current.get_value(&mem)),
                     HDataTypes::NumLiteral(n) => presult.add_num(n), 
                 }
             }
@@ -207,7 +208,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -222,7 +223,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -237,7 +238,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -252,7 +253,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (last:{}) ,reset timer.",
+                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -316,12 +317,24 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 let ptr = data_current.get_value(&mem) as usize;
                 mem.put_cell(ptr, x.unwrap_or(0));
             }
-            _ => panic!("unsupported command:{:?}", command_current),
         }
         if noplusline {
             noplusline = false;
         } else {
             ln += 1;
+        }
+        if jumps_t > 900000 {
+            use std::io::{stdin, Read};
+            println!("monkey has *really* tired,contiue simulate? [Return or other]");
+            let mut user_input = [0u8];
+            stdin().read(&mut user_input).unwrap();
+            if user_input[0] == b'\n' {
+                println!("contiue. resetting total jumps: {}", jumps_t + jumps);
+                jumps = 0;
+                jumps_t = 0;
+            } else {
+                break;
+            }
         }
         steps += 1;
     }
@@ -356,19 +369,21 @@ impl PResult {
     pub fn add_char(&mut self, output: char) {
         self.out_ascii.push(output);
     }
-    //TODO 2hex
     pub fn add_char_from_ascii(&mut self, output: CellType) {
         self.add_char(from_u32(output as u32).unwrap());
     }
     pub fn put_step(&mut self, step: u32) {
         self.step = step;
     }
+    #[allow(unused)]
     pub fn get_step(&self) -> u32 {
         self.step
     }
+    #[allow(unused)]
     pub fn get_num(self) -> Vec<CellType> {
         self.out_num
     }
+    #[allow(unused)]
     pub fn get_ascii(self) -> Vec<char> {
         self.out_ascii
     }
@@ -523,6 +538,7 @@ mod tests_im {
 }
 
 #[derive(Debug)]
+#[allow(non_snake_case)]
 struct InputManager {
     Input: Vec<CellType>,
     last: usize,

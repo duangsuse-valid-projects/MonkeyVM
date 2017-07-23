@@ -1,5 +1,4 @@
 //monkey-lang memory implemention
-use std::fmt::{Display, Formatter, Result};
 use utils::error::check_idpointer_validate;
 
 pub type CellType = i32;
@@ -44,6 +43,7 @@ impl Hmem {
     pub fn new() -> Hmem {
         Hmem { memory: [0; MEM_SIZE] }
     }
+    #[allow(unused)]
     pub fn get_memory(&self) -> [i32; 1024] {
         self.memory
     }
@@ -54,7 +54,6 @@ impl Hmem {
         self.memory[pointer] = value;
     }
     pub fn get_cell_indirect(&self, poniter: usize) -> CellType {
-        let cell_pointer = self.memory[poniter];
         //check_idpointer_validate(cell_pointer);
         let ptr = self.cell_points_to(poniter);
         //please give me a piece of advice >_>

@@ -9,7 +9,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.1.2";
+const VERSION: &str = "0.1.3";
 fn main() {
     let arg = parse_args(args().collect());
     //println!("{:?}",arg.type_class1);
@@ -23,7 +23,7 @@ a tool for running coding's monkey-lang code
 Usage:
 {} help to print help
 {} version to print version
-<PARGS=args>&&{} run [file]  to run a program
+<PARGS=args> {} run [file]  to run a program
 get source code on coding.net",
                 VERSION,
                 binary_path,
@@ -51,7 +51,7 @@ fn parsepargs() -> Vec<i32> {
             }
             pargs
         }
-        Err(e) => Vec::<i32>::new(),
+        Err(_) => Vec::<i32>::new(),
     }
 }
 /*
@@ -72,7 +72,6 @@ fn parsepargs() -> Vec<i32> {
 //useless tests,but ... >_>
 #[cfg(test)]
 mod tests {
-    use main;
     use parse_args;
     use ArgumentType;
     #[test]

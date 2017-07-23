@@ -1,4 +1,4 @@
-use std::slice::Iter;
+//use std::slice::Iter;
 use utils::memory;
 use utils::res::HDataTypes::*;
 
@@ -52,6 +52,7 @@ impl HCommands {
     */
 
     //Lifetime bad guy.... go study lifetime...
+    #[allow(unused)]
     pub fn from_str(&self, cmd_str: &str) -> Option<HCommands> {
         if cmd_str == HCommands::SUB.to_str() {
             Some(HCommands::SUB)
@@ -124,7 +125,7 @@ mod tests {
         }
     }
     #[test]
-    fn command_parser_None_on_input_worng() {
+    fn command_parser_none_on_input_worng() {
         let command_str = ":bad_command:";
         let cmd = HCommands::ADD; //Bad Lifetime
         let cmd_o = cmd.from_str(command_str);
@@ -145,16 +146,16 @@ impl HDataTypes {
         }
     }
     //TODO useless,should be cleand up before release.
-    pub fn get_meta(self) -> WorkAroundPasser {
+    /*pub fn get_meta(self) -> WorkAroundPasser {
         match self {
             NumLiteral(x) => WorkAroundPasser::new(WorkAroundPasserType::NumL, x),
             Pointer(x) => WorkAroundPasser::new(WorkAroundPasserType::Ptr, x as i32),
             IndirectPointer(x) => WorkAroundPasser::new(WorkAroundPasserType::IPtr, x as i32),
             Nil => WorkAroundPasser::new(WorkAroundPasserType::N, 0),
         }
-    }
+    }*/
 }
-
+/*
 #[derive(Debug)]
 pub struct WorkAroundPasser {
     pub Type: WorkAroundPasserType,
@@ -168,13 +169,14 @@ impl WorkAroundPasser {
         }
     }
 }
-#[derive(Debug)]
+*/
+/*#[derive(Debug)]
 pub enum WorkAroundPasserType {
     N,
     NumL,
     Ptr,
     IPtr,
-}
+}*/
 /*
 pub fn Hcmd_as_array() -> [HCommands; 14] {
     [

@@ -2,7 +2,6 @@ extern crate test;
 
 use utils::res::{HDataTypes, HCommands};
 use vm::{TagManager, Tag};
-use std::str::SplitWhitespace;
 
 #[cfg(test)]
 mod parser_tests {
@@ -114,19 +113,13 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
     *ln_real = target.CMD.len();
     if line.starts_with(":monkey_") {
         target.CMD.push(HCommands::ADD);
-        target.DAT.push(
-            datparse(HCommands::ADD, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::ADD, line, ln));
     } else if line.starts_with(":l") {
         target.CMD.push(HCommands::AO);
-        target.DAT.push(
-            datparse(HCommands::AO, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::AO, line, ln));
     } else if line.starts_with(":pou") {
         target.CMD.push(HCommands::I);
-        target.DAT.push(
-            datparse(HCommands::I, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::I, line, ln));
     } else if line.starts_with(":poi") {
         let mut trimd = line.replace(":point_right:", "");
         /*if trimd.split("//").next().unwrap() == "" {
@@ -143,64 +136,42 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
         ));
     } else if line.starts_with(":monkey:") {
         target.CMD.push(HCommands::JMP);
-        target.DAT.push(
-            datparse(HCommands::JMP, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::JMP, line, ln));
     } else if line.starts_with(":h") {
         target.CMD.push(HCommands::O);
-        target.DAT.push(
-            datparse(HCommands::O, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::O, line, ln));
     } else if line.starts_with(":question::s") {
         target.CMD.push(HCommands::QNJ);
-        target.DAT.push(
-            datparse(HCommands::QNJ, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::QNJ, line, ln));
     } else if line.starts_with(":question::m") {
         target.CMD.push(HCommands::QNU);
-        target.DAT.push(
-            datparse(HCommands::QNU, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::QNU, line, ln));
     } else if line.starts_with(":question::b") {
         target.CMD.push(HCommands::QPJ);
-        target.DAT.push(
-            datparse(HCommands::QPJ, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::QPJ, line, ln));
     } else if line.starts_with(":question::g") {
         target.CMD.push(HCommands::QZJ);
-        target.DAT.push(
-            datparse(HCommands::QZJ, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::QZJ, line, ln));
     } else if line.starts_with(":thumbsu") {
         target.CMD.push(HCommands::RAD);
-        target.DAT.push(
-            datparse(HCommands::RAD, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::RAD, line, ln));
     } else if line.starts_with(":e") {
         target.CMD.push(HCommands::RED);
-        target.DAT.push(
-            datparse(HCommands::RED, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::RED, line, ln));
     } else if line.starts_with(":thumbsd") {
         target.CMD.push(HCommands::RSB);
-        target.DAT.push(
-            datparse(HCommands::RSB, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::RSB, line, ln));
     } else if line.starts_with(":s") {
         target.CMD.push(HCommands::SUB);
-        target.DAT.push(
-            datparse(HCommands::SUB, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::SUB, line, ln));
     } else if line.starts_with(":m") {
         target.CMD.push(HCommands::WRT);
-        target.DAT.push(
-            datparse(HCommands::WRT, line, ln, &mut ln_real),
-        );
+        target.DAT.push(datparse(HCommands::WRT, line, ln));
     } else {
         panic!("fatal: can not parse command at line {}", ln + 1);
     }
 }
-fn datparse(cmdtpe: HCommands, line: &str, ln: &usize, lnr: &mut usize) -> HDataTypes {
+fn datparse(cmdtpe: HCommands, line: &str, ln: &usize) -> HDataTypes {
     let mut tmp: String = line.replace(cmdtpe.to_str(), "");
     /*if tmp.split("//").next().unwrap() == "" {
         if lnr != &0 {
@@ -293,6 +264,7 @@ fn parse_data(data: &str) -> Option<HDataTypes> {
 */
 //use array instead of vector for benchmark(higer performace).
 #[derive(Debug)]
+#[allow(non_snake_case)]
 pub struct MonkeyAST {
     pub CMD: Vec<HCommands>,
     pub DAT: Vec<HDataTypes>,
