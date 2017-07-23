@@ -318,11 +318,11 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 match data_current {
                     HDataTypes::Pointer(p) => {
                         let val = x.unwrap_or(0);
-                        &mem.put_cell(p, *val);
+                        &mem.put_cell(p, val);
                     }
                     HDataTypes::IndirectPointer(p) => {
                         let val = x.unwrap_or(0);
-                        &mem.put_cell_indirect(p, *val);
+                        &mem.put_cell_indirect(p, val);
                     } 
                     HDataTypes::NumLiteral(_) => {
                         println!("WARN: trying to Write without pointer {}", ln)
