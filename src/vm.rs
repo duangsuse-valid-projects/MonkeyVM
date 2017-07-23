@@ -104,8 +104,7 @@ mod tests_proc {
     }
 }
 
-//Clone trait??
-fn borrowing_workaround(dat: &HDataTypes) -> HDataTypes {
+fn borrow_data(dat: &HDataTypes) -> HDataTypes {
     match dat {
         &HDataTypes::IndirectPointer(p) => HDataTypes::IndirectPointer(p),
         &HDataTypes::NumLiteral(n) => HDataTypes::NumLiteral(n),
@@ -130,23 +129,33 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
             break;
         }
         let command_current = &hast.CMD[ln];
-        let data_current = borrowing_workaround(&hast.DAT[ln]);
+        let data_current = borrow_data(&hast.DAT[ln]);
+        if debug {
+            println!(
+                "vm: executing command:{:?} with data {:?}",
+                command_current,
+                data_current
+            );
+        }
         match command_current {
             &HCommands::ADD => {
                 match data_current {
                     HDataTypes::Nil => x = Some(x.unwrap_or(0) + 1),
                     HDataTypes::IndirectPointer(v) => {
-                        let val = &mem.get_cell_indirect(v) + 1;
+                        let val = x.unwrap_or(0) + &mem.get_cell_indirect(v);
                         x = Some(val);
                     }
                     HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) + v),
                     HDataTypes::Pointer(v) => {
-                        let val = &mem.get_cell(v) + 1;
+                        let val = x.unwrap_or(0) + &mem.get_cell(v);
                         x = Some(val);
                     }
                 }
             }
             &HCommands::AO => {
+                if verbose {
+                    println!("ascii outputting... x={:?}", x);
+                }
                 match data_current {
                     HDataTypes::Nil => {
                         if x == None {
@@ -165,15 +174,22 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                 }
             }
             &HCommands::I => {
-                x = input.feed();
+                let next_param = input.feed();
+                if verbose {
+                    println!("feeding {:?} to x-{:?}", next_param, x);
+                }
+                x = next_param;
             }
             &HCommands::JMP => {
+                if verbose {
+                    println!("process jump at cmd#{}", ln);
+                }
                 noplusline = true;
                 jumps += 1;
                 ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                 if jumps > 10000 {
                     println!(
-                        "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
+                        "WARN: monkey has jumped for over 10000 times (to:{}) ,reset timer.",
                         ln
                     );
                     jumps_t += jumps;
@@ -181,9 +197,12 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                 }
             }
             &HCommands::O => {
+                if verbose {
+                    println!("outputting... x={:?}", x);
+                }
                 match data_current {
                     HDataTypes::Nil => {
-                        if x.is_none() {
+                        if x == None {
                             println!("WARN: attempt to output when x is a None value near {}", ln);
                         } else {
                             presult.add_num(x.unwrap());
@@ -195,13 +214,20 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                 }
             }
             &HCommands::QNJ => {
+                if verbose {
+                    println!("negative-jumping from {}... x={:?}", ln, x);
+                }
+                if x == None {
+                    println!("fatal: attempt to negative-jump on a None value,force stop.");
+                    break;
+                }
                 if x.unwrap() < 0 {
                     noplusline = true;
                     jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
+                            "WARN: monkey has jumped for over 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -210,13 +236,16 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                 }
             }
             &HCommands::QNU => {
+                if verbose {
+                    println!("none-jumping from {}... x={:?}", ln, x);
+                }
                 if x == None {
                     noplusline = true;
                     jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
+                            "WARN: monkey has jumped for over 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -225,13 +254,20 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                 }
             }
             &HCommands::QPJ => {
+                if verbose {
+                    println!("positive-jumping from {}... x={:?}", ln, x);
+                }
+                if x == None {
+                    println!("fatal: attempt to positive-jump on a None value,force stop.");
+                    break;
+                }
                 if x.unwrap() > 0 {
                     noplusline = true;
                     jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
+                            "WARN: monkey has jumped over for 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -240,13 +276,20 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                 }
             }
             &HCommands::QZJ => {
+                if verbose {
+                    println!("zero-jumping from {}... x={:?}", ln, x);
+                }
+                if x == None {
+                    println!("fatal: attempt to zero-jump on a None value,force stop.");
+                    break;
+                }
                 if x.unwrap() == 0 {
                     noplusline = true;
                     jumps += 1;
                     ln = hast.Tags.locate(data_current.get_value(&mem)).unwrap() as usize;
                     if jumps > 10000 {
                         println!(
-                            "WARN: monkey has jumped over 10000 times (to:{}) ,reset timer.",
+                            "WARN: monkey has jumped over for 10000 times (to:{}) ,reset timer.",
                             ln
                         );
                         jumps_t += jumps;
@@ -262,7 +305,6 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                     }
                     HDataTypes::IndirectPointer(p) => {
                         let val = &mem.get_cell_indirect(p) + 1;
-                        println!("putting {} to #{}", val, p);
                         &mem.put_cell_indirect(p, val);
                     } 
                     HDataTypes::NumLiteral(_) => {
@@ -302,7 +344,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                     }
                     HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) - v),
                     HDataTypes::Pointer(v) => {
-                        let val = &mem.get_cell(v) - 1;
+                        let val = x.unwrap_or(0) - &mem.get_cell(v);
                         x = Some(val);
                     }
                 }
@@ -333,7 +375,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
         }
         if jumps_t > 900000 {
             use std::io::{stdin, Read};
-            println!("monkey has *really* tired,contiue simulate? [Return or other]");
+            println!("monkey got *really* tired,contiue simulate? [Return/*]");
             let mut user_input = [0u8];
             stdin().read(&mut user_input).unwrap();
             if user_input[0] == b'\n' {

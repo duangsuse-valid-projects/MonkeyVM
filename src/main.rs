@@ -10,7 +10,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.1.3";
+const VERSION: &str = "0.2.0";
 
 fn main() {
     let commandline = args().collect();
@@ -37,6 +37,7 @@ Usage:
 {} help|h to print help
 {} version|v to print version
 {} run|r [file]  to execute a program
+
 Environment variables:
 PARGS -> ',' splited hprog arguments
 PDBG=1 -> Debug mode (higest verbose level)

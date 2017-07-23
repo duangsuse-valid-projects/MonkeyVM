@@ -1,11 +1,14 @@
 //monkey-lang memory implemention
-use utils::error::check_idpointer_validate;
+use std::env::var;
+use utils::error::{check_idpointer_validate, check_pointer_validate};
+use utils::error::Presult;
 
 pub type CellType = i32;
 pub const MEM_SIZE: usize = 1024;
 
 pub struct Hmem {
     memory: [CellType; MEM_SIZE],
+    verbose: bool,
 }
 #[cfg(test)]
 mod tests {
@@ -41,28 +44,65 @@ mod tests {
 }
 impl Hmem {
     pub fn new() -> Hmem {
-        Hmem { memory: [0; MEM_SIZE] }
+        Hmem {
+            memory: [0; MEM_SIZE],
+            verbose: var("PVBS").unwrap_or_default() == "1",
+        }
     }
     #[allow(unused)]
     pub fn get_memory(&self) -> [i32; 1024] {
         self.memory
     }
-    pub fn get_cell(&self, poniter: usize) -> CellType {
-        self.memory[poniter]
+    pub fn get_cell(&self, pointer: usize) -> CellType {
+        if self.verbose {
+            println!("mem: getting cell #{}:{}...", pointer, self.memory[pointer]);
+        }
+        match check_pointer_validate(pointer) {
+            Presult::Err => {
+                panic!(
+                    "fatal: cell getting failed: {} isn't a valid pointer",
+                    pointer
+                )
+            }
+            Presult::Ok => {}
+        }
+        self.memory[pointer]
     }
     pub fn put_cell(&mut self, pointer: usize, value: CellType) {
+        if self.verbose {
+            println!("mem: putting {} to #{}", value, pointer);
+        }
+        match check_pointer_validate(pointer) {
+            Presult::Err => {
+                panic!(
+                    "fatal: cell putting #{}:{} failed: isn't a valid pointer",
+                    pointer,
+                    value
+                )
+            }
+            Presult::Ok => {}
+        }
         self.memory[pointer] = value;
     }
     pub fn get_cell_indirect(&self, poniter: usize) -> CellType {
+        if self.verbose {
+            println!(
+                "mem: getting cell indirect:#{}:{}",
+                poniter,
+                self.memory[poniter]
+            );
+        }
         let ptr = self.cell_points_to(poniter);
         self.memory[ptr]
     }
     pub fn put_cell_indirect(&mut self, pointer: usize, value: CellType) {
+        if self.verbose {
+            println!("mem: putting cell indirect {} to #{}", value, pointer);
+        }
         let ptr = self.cell_points_to(pointer);
         self.put_cell(ptr, value);
     }
     fn cell_points_to(&self, cell: usize) -> usize {
-        use utils::error::Presult;
         let cell_contains = self.get_cell(cell);
         match check_idpointer_validate(cell_contains) {
             Presult::Err => {
