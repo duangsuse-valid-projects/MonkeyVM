@@ -102,6 +102,34 @@ mod tests_proc {
         let r = do_emulate(hprog, vec![-1, 3, 5], false, false);
         assert_eq!(r.get_num(), [0, 4, 6]);
     }
+    #[test]
+    fn read_iptr_works() {
+        use parser::parse_program;
+        use vm::do_emulate;
+        let program_ast = parse_program(
+            "
+:eyes:2233 //read 2233 to x
+:memo::point_right:1 // write to #1
+:eyes:1023 //read 1023 to x
+:memo::point_right:0 //write 1023 to 0
+:eyes:69 //read 69 to x
+:memo::point_right:0:point_right: //write 69 to #1023
+:thumbsup::point_right:1023 //#1023-> 70
+:eyes::point_right:1023 //read #1023 to x
+:hankey:
+:eyes::point_right:1 //read 2233 to x
+:hankey:
+:eyes::point_right:0 //read 1023 to x
+:hankey:
+:see_no_evil::point_right:0:point_right:
+:hankey:
+        ",
+            false,
+            false,
+        );
+        let result = do_emulate(program_ast, vec![], false, false);
+        assert_eq!(result.get_num(), [70, 2233, 1023, 953]);
+    }
 }
 
 fn borrow_data(dat: &HDataTypes) -> HDataTypes {
@@ -339,7 +367,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                     //>_<WTF
                     HDataTypes::Nil => x = Some(x.unwrap_or(0) - 1),
                     HDataTypes::IndirectPointer(v) => {
-                        let val = &mem.get_cell_indirect(v) - 1;
+                        let val = x.unwrap_or(0) - &mem.get_cell_indirect(v);
                         x = Some(val);
                     }
                     HDataTypes::NumLiteral(v) => x = Some(x.unwrap_or(0) - v),
