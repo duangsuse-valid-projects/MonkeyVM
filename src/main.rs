@@ -10,7 +10,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.2.0";
+const VERSION: &str = "0.2.1";
 
 fn main() {
     let commandline = args().collect();

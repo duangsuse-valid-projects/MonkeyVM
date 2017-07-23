@@ -330,10 +330,12 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                     HDataTypes::Pointer(p) => {
                         let val = &mem.get_cell(p) + 1;
                         &mem.put_cell(p, val);
+                        x = Some(val);
                     }
                     HDataTypes::IndirectPointer(p) => {
                         let val = &mem.get_cell_indirect(p) + 1;
                         &mem.put_cell_indirect(p, val);
+                        x = Some(val);
                     } 
                     HDataTypes::NumLiteral(_) => {
                         println!("WARN: trying to RAD without pointer {}", ln)
@@ -349,10 +351,12 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
                     HDataTypes::Pointer(p) => {
                         let val = &mem.get_cell(p) - 1;
                         &mem.put_cell(p, val);
+                        x = Some(val);
                     }
                     HDataTypes::IndirectPointer(p) => {
                         let val = &mem.get_cell_indirect(p) - 1;
                         &mem.put_cell_indirect(p, val);
+                        x = Some(val);
                     } 
                     HDataTypes::NumLiteral(_) => {
                         println!("WARN: trying to RSB without pointer {}", ln)
