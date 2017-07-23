@@ -54,16 +54,11 @@ impl Hmem {
         self.memory[pointer] = value;
     }
     pub fn get_cell_indirect(&self, poniter: usize) -> CellType {
-        //check_idpointer_validate(cell_pointer);
         let ptr = self.cell_points_to(poniter);
-        //please give me a piece of advice >_>
-        //let ptr_string = format!("{}", cell_pointer);
-        //let ptr: usize = ptr_string.parse().unwrap();
         self.memory[ptr]
     }
     pub fn put_cell_indirect(&mut self, pointer: usize, value: CellType) {
         let ptr = self.cell_points_to(pointer);
-        //println!("put {} to #{}",value,ptr);
         self.put_cell(ptr, value);
     }
     fn cell_points_to(&self, cell: usize) -> usize {

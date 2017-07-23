@@ -10,16 +10,15 @@ use parser::MonkeyAST;
 use utils::memory::{CellType, Hmem};
 use utils::res::{HCommands, HDataTypes};
 
-pub fn execute_program(program: &str, arg: Vec<CellType>) {
-    println!("Executing program... args: {:?}", arg);
+pub fn execute_program(program: &str, arg: Vec<CellType>, verbose: bool, debug: bool) {
+    println!("Executing program with args: {:?} ...", arg);
     let time_start = SystemTime::now();
-    let prog_ast = parser::parse_program(program);
-    //TODO :-( I don't know,either!
-    let result = do_emulate(prog_ast, arg);
+    let prog_ast = parser::parse_program(program, verbose, debug);
+    let result = do_emulate(prog_ast, arg, verbose, debug);
     let time_end = SystemTime::now();
     let time_duration = time_end.duration_since(time_start).unwrap();
     println!(
-        "Program finished in {} secs. ({:?})",
+        "Program finished in {} secs. {:?}",
         time_duration.as_secs(),
         time_duration
     );
@@ -34,11 +33,11 @@ mod tests_proc {
     use vm::test::Bencher;
     use vm::Tag;
     #[bench]
-    fn intpret_speed(b: &mut Bencher) {
-        b.iter(|| inprete_well())
+    fn interpret_speed(b: &mut Bencher) {
+        b.iter(|| interprete_well())
     }
     #[test]
-    fn inprete_well() {
+    fn interprete_well() {
         let mut test_hprog = MonkeyAST::new();
         //x=Some(0)
         test_hprog.CMD.push(HCommands::ADD);
@@ -53,10 +52,10 @@ mod tests_proc {
         test_hprog.DAT.push(HDataTypes::Pointer(0)); //x=Some(9)
         test_hprog.CMD.push(HCommands::O);
         test_hprog.DAT.push(HDataTypes::Nil);
-        let r = do_emulate(test_hprog, vec![]);
+        let r = do_emulate(test_hprog, vec![], false, false);
         assert_eq!(r.get_num()[0], 11);
     }
-    //TODO write more tests
+
     #[test]
     fn ao_works() {
         let mut hprog = MonkeyAST::new();
@@ -64,7 +63,7 @@ mod tests_proc {
         hprog.DAT.push(HDataTypes::NumLiteral(0x0061)); //Unicode/ascii char a 0x0061
         hprog.CMD.push(HCommands::AO);
         hprog.DAT.push(HDataTypes::Nil);
-        let r = do_emulate(hprog, vec![]);
+        let r = do_emulate(hprog, vec![], false, false);
         assert_eq!(r.get_ascii()[0], 'a');
     }
     #[test]
@@ -80,7 +79,7 @@ mod tests_proc {
         hprog.DAT.push(HDataTypes::Pointer(0));
         hprog.CMD.push(HCommands::O);
         hprog.DAT.push(HDataTypes::Nil);
-        let r = do_emulate(hprog, vec![]);
+        let r = do_emulate(hprog, vec![], false, false);
         assert_eq!(r.get_num()[0], 1);
     }
     #[test]
@@ -100,7 +99,7 @@ mod tests_proc {
         hprog.DAT.push(HDataTypes::NumLiteral(1));
         hprog.CMD.push(HCommands::ADD);
         hprog.DAT.push(HDataTypes::Nil);
-        let r = do_emulate(hprog, vec![-1, 3, 5]);
+        let r = do_emulate(hprog, vec![-1, 3, 5], false, false);
         assert_eq!(r.get_num(), [0, 4, 6]);
     }
 }
@@ -116,9 +115,8 @@ fn borrowing_workaround(dat: &HDataTypes) -> HDataTypes {
 }
 
 //emulate hlang program with memory
-//TODO verbose error printing
-fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
-    let mut ln = 0usize; //line executing
+fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -> PResult {
+    let mut ln = 0usize;
     let mut presult = PResult::new();
     let mut x: Option<CellType> = None;
     let mut mem: Hmem = Hmem::new();
@@ -126,7 +124,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
     let mut steps = 0u32;
     let mut jumps = 0u32;
     let mut jumps_t = 0u32;
-    let mut noplusline = false; //alt. use continue; instead of noplusline=true;
+    let mut noplusline = false;
     loop {
         if ln >= hast.CMD.len() {
             break;
@@ -136,7 +134,6 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
         match command_current {
             &HCommands::ADD => {
                 match data_current {
-                    //>_<WTF
                     HDataTypes::Nil => x = Some(x.unwrap_or(0) + 1),
                     HDataTypes::IndirectPointer(v) => {
                         let val = &mem.get_cell_indirect(v) + 1;
@@ -150,7 +147,6 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 }
             }
             &HCommands::AO => {
-                //println!("putting {} to asciiout", x.unwrap());
                 match data_current {
                     HDataTypes::Nil => {
                         if x == None {
@@ -169,9 +165,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 }
             }
             &HCommands::I => {
-                //feed() returns Some(_) if there is a input remain,None if not.
                 x = input.feed();
-                //println!("putting {:?} to x", x);
             }
             &HCommands::JMP => {
                 noplusline = true;
@@ -187,7 +181,6 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 }
             }
             &HCommands::O => {
-                //println!("putting {} to numout", x.unwrap());
                 match data_current {
                     HDataTypes::Nil => {
                         if x.is_none() {
@@ -337,7 +330,6 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
             noplusline = false;
         } else {
             ln += 1;
-            //println!("{}",&mem.pretty());
         }
         if jumps_t > 900000 {
             use std::io::{stdin, Read};
@@ -355,13 +347,15 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
         steps += 1;
     }
     presult.put_step(steps);
-    println!(
-        "VM core: total jump count: {} ,end line: {} ,memory snap: {} ,x: {:?}",
-        jumps_t + jumps,
-        ln,
-        mem.pretty(),
-        x
-    );
+    if verbose || debug {
+        println!(
+            "VM core: total jump count: {} ,end line: {} ,memory snap: {} ,x: {:?}",
+            jumps_t + jumps,
+            ln,
+            mem.pretty(),
+            x
+        );
+    }
     presult
 }
 

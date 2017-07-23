@@ -2,6 +2,8 @@ extern crate test;
 
 use utils::res::{HDataTypes, HCommands};
 use vm::{TagManager, Tag};
+use std::time::SystemTime;
+use std::process::exit;
 
 #[cfg(test)]
 mod parser_tests {
@@ -16,7 +18,7 @@ mod parser_tests {
         :see_no_evil:3
         :hankey:
         ";
-        let r = parse_program(program);
+        let r = parse_program(program, false, false);
         match r.CMD[0] {
             HCommands::SUB => {}
             _ => panic!("parser err, expected SUB but {} given", r.CMD[0].to_str()),
@@ -35,12 +37,7 @@ mod parser_tests {
         }
         match r.DAT[1] { 
             HDataTypes::NumLiteral(3) => {}
-            _ => {
-                panic!(
-                    "parser err, expected NumLiteral(3) but {:?} given",
-                    r.DAT[1]
-                )
-            }
+            _ => panic!("parser err, expected 3 but {:?} given", r.DAT[1]),
         }
         assert_eq!(r.Tags.locate(2), Some(0));
     }
@@ -84,33 +81,36 @@ mod parser_tests {
 :memo::point_right: 1
 :memo::point_right: 3
 ";
-        parse_program(program);
+        parse_program(program, false, false);
     }
 }
 
-//TODO ~~impl. parser~~
-//TODO write test for parser
-pub fn parse_program(prog: &str) -> MonkeyAST {
+pub fn parse_program(prog: &str, verbose: bool, debug: bool) -> MonkeyAST {
+    let time_start = SystemTime::now();
     let mut ret = MonkeyAST::new();
-    let mut line_real = 0;
     for (n, l) in prog.lines().enumerate() {
         let line_trim = l.split("//").next().unwrap_or(l);
         if line_trim.trim() != "" {
-            //println!("{} gived to parse_line", line_trim.replace(" ", ""));
-            parse_line(&n, &mut line_real, l.replace(" ", "").as_str(), &mut ret);
-            /*if !l.replace(" ", "").starts_with(":point_ri") {
-                line_real += 1;
-            } else {
-                println!("ignoring point_right");
-            }*/
+            parse_line(&n, l.replace(" ", "").as_str(), &mut ret, debug);
         }
     }
-    println!("parse finish. result: {:?}", ret);
+    let time_duration = SystemTime::now().duration_since(time_start);
+    if debug {
+        println!("parse finished in {:?}", time_duration);
+    }
+    if verbose {
+        println!(
+            "parse finished in {} secs. result: {:?}",
+            time_duration.unwrap_or_default().as_secs(),
+            ret
+        );
+    }
     ret
 }
-fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut MonkeyAST) {
-    //println!("parsing {} ...", &line);
-    *ln_real = target.CMD.len();
+fn parse_line(ln: &usize, line: &str, target: &mut MonkeyAST, debug: bool) {
+    if debug {
+        println!("parser: parsing line {}:{}", ln, line);
+    }
     if line.starts_with(":monkey_") {
         target.CMD.push(HCommands::ADD);
         target.DAT.push(datparse(HCommands::ADD, line, ln));
@@ -121,18 +121,17 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
         target.CMD.push(HCommands::I);
         target.DAT.push(datparse(HCommands::I, line, ln));
     } else if line.starts_with(":poi") {
-        let mut trimd = line.replace(":point_right:", "");
-        /*if trimd.split("//").next().unwrap() == "" {
-            if ln_real != &0 {
-                *ln_real = *ln_real - 1;
-            }
-        }*/
-        //*ln_real -= 1;
-        trimd = trimd.split("//").next().unwrap().to_string();
-        //println!("tagr trimed line: {}", trimd);
+        let mut trimed = line.replace(":point_right:", "");
+        if debug {
+            println!("parser[parsetag]: trimed line:{}", trimed);
+        }
+        trimed = trimed.split("//").next().unwrap().to_string();
+        if debug {
+            println!("parser[parsetag]: splited line:{}", trimed);
+        }
         target.Tags.add_tag(Tag::new(
-            trimd.parse::<i32>().unwrap(),
-            *ln_real as u32,
+            trimed.parse::<i32>().unwrap(),
+            target.CMD.len() as u32,
         ));
     } else if line.starts_with(":monkey:") {
         target.CMD.push(HCommands::JMP);
@@ -168,18 +167,13 @@ fn parse_line(ln: &usize, mut ln_real: &mut usize, line: &str, target: &mut Monk
         target.CMD.push(HCommands::WRT);
         target.DAT.push(datparse(HCommands::WRT, line, ln));
     } else {
-        panic!("fatal: can not parse command at line {}", ln + 1);
+        println!("fatal: can not parse command at line {}", ln + 1);
+        exit(2);
     }
 }
 fn datparse(cmdtpe: HCommands, line: &str, ln: &usize) -> HDataTypes {
     let mut tmp: String = line.replace(cmdtpe.to_str(), "");
-    /*if tmp.split("//").next().unwrap() == "" {
-        if lnr != &0 {
-            *lnr = *lnr - 1;
-        }
-    }*/
     tmp = tmp.split("//").next().unwrap().to_string();
-    //println!("strriped: {}", tmp);
     if let Ok(i) = tmp.parse::<i32>() {
         HDataTypes::NumLiteral(i)
     } else {
@@ -194,74 +188,14 @@ fn datparse(cmdtpe: HCommands, line: &str, ln: &usize) -> HDataTypes {
                 if let Ok(i) = replaced.parse::<usize>() {
                     HDataTypes::Pointer(i)
                 } else {
-                    panic!("fatal: cannot parse data at line {}", ln + 1);
+                    println!("fatal: cannot parse data at line {}", ln + 1);
+                    exit(2);
                 }
             }
         }
     }
 }
-//以下第一次写的parser无法贴合需求,已被注释掉,仅供参考~~其实是写了几十分钟心疼不想移除掉~~
-/*
-pub fn parse_program(program: &str) -> MonkeyAST {
-    let mut ret = MonkeyAST::new();
-    let mut line_strriped = 0usize;
-    for (n, l) in program.lines().enumerate() {
-        let lineq = l.split("//").next().unwrap_or(l);
-        if lineq.trim() == "" {
-            line_strriped += 1;
-        } else {
-            parse_cmdata(&line_strriped, &n, lineq, &mut ret);
-        }
-    }
-    ret
-}
-fn parse_cmdata(l: &usize, n: &usize, line: &str, ast: &mut MonkeyAST) {
-    let mut line_splited = line.split_whitespace();
-    let (c, should_panic) = parse_cmd(n - l, line_splited.next().unwrap(), ast);
-    if let Some(v) = c {
-        &ast.CMD.push(v);
-    } else {
-        if should_panic {
-            panic!("can not parse command at line {}", n);
-        }
-    }
-    if let Some(d) = parse_data(line_splited.next().unwrap()) {
-        &ast.DAT.push(d);
-    }
-}
-fn parse_cmd(l: usize, cmd: &str, ast: &mut MonkeyAST) -> (Option<HCommands>, bool) {
-    println!("execute {}:{}", l, cmd);
-    if cmd.starts_with(":point_right:") {
-        let id: i32 = cmd.replace(":point_right:", "").trim().parse().unwrap();
-        ast.Tags.add_tag(Tag::new(id, l as u32));
-        (None, false)
-    } else {
-        (HCommands::ADD.from_str(cmd), true)
-    }
-}
-fn parse_data(data: &str) -> Option<HDataTypes> {
-    println!("pasing {}", data);
-    let lit: Result<i32, _> = data.parse();
-    if let Ok(l) = lit {
-        Some(HDataTypes::NumLiteral(l))
-    } else {
-        if data.starts_with(":point_right:") {
-            let val: usize = data.replace(":point_right", "").parse().unwrap();
-            if data.replace(" ", "") == ":point_right::point_right:" {
-                Some(HDataTypes::IndirectPointer(val))
-            } else {
-                Some(HDataTypes::Pointer(val))
-            }
-        } else {
-            if data.trim() == "" {
-                Some(HDataTypes::Nil)
-            } else {
-                None
-            }
-        }
-    }
-}
-*/
+
 //use array instead of vector for benchmark(higer performace).
 #[derive(Debug)]
 #[allow(non_snake_case)]

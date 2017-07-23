@@ -4,27 +4,44 @@
 use std::env::{args, var};
 use std::io::prelude::*;
 use std::fs::File;
+use std::process::exit;
 
 mod vm;
 mod parser;
 mod utils;
 
 const VERSION: &str = "0.1.3";
+
 fn main() {
-    let arg = parse_args(args().collect());
-    //println!("{:?}",arg.type_class1);
+    let commandline = args().collect();
+    let debug = var("PDBG").unwrap_or_default() == "1";
+    let verbose = var("PVBS").unwrap_or_default() == "1";
+    if debug {
+        println!(
+            "Monkey VM v{} started in debug mode with commandline argument {:?}",
+            VERSION,
+            commandline
+        );
+    }
+    let arg = parse_args(commandline);
+    if debug {
+        println!("parsed argument: {:?}", arg);
+    }
     match arg.type_class1 {
         ArgumentType::PrintHelp => {
-            let binary_path: Vec<String> = args().collect();
-            let binary_path: &str = binary_path[0].as_str();
+            let binary_path: String = args().next().unwrap_or(String::from("mvm"));
             println!(
-                "MonkeyVM (Version {})
+                "MonkeyVM v{}
 a tool for running coding's monkey-lang code
 Usage:
-{} help to print help
-{} version to print version
-<PARGS=args> {} run [file]  to run a program
-get source code on coding.net",
+{} help|h to print help
+{} version|v to print version
+{} run|r [file]  to execute a program
+Environment variables:
+PARGS -> ',' splited hprog arguments
+PDBG=1 -> Debug mode (higest verbose level)
+PVBS=1 -> Verbose (output when memory change,etc.)
+get source code at https://coding.net",
                 VERSION,
                 binary_path,
                 binary_path,
@@ -36,15 +53,20 @@ get source code on coding.net",
             let mut program_text: String = String::new();
             arg.get_file().read_to_string(&mut program_text).unwrap();
             let pargs: Vec<i32> = parsepargs();
-            vm::execute_program(program_text.as_str(), pargs);
+            vm::execute_program(program_text.as_str(), pargs, verbose, debug);
         }
     }
 }
 fn parsepargs() -> Vec<i32> {
     match var("PARGS") {
         Ok(a) => {
+            let arg_text_trimed = a.trim();
+            if arg_text_trimed == "" {
+                println!("please unset blank varaible PARGS first.");
+                exit(1);
+            }
             let mut pargs = Vec::<i32>::new();
-            let pargs_txt = a.trim().split(',');
+            let pargs_txt = arg_text_trimed.split(",");
             for i in pargs_txt {
                 let tmp: i32 = i.parse::<i32>().unwrap();
                 pargs.push(tmp);
@@ -54,90 +76,52 @@ fn parsepargs() -> Vec<i32> {
         Err(_) => Vec::<i32>::new(),
     }
 }
-/*
-fn parsepargs() -> Vec<i32> {
-    let mut ret = Vec::<i32>::new();
-    let mut l = 0;
-    let i : &str;
-    for i in args().collect() {
-        if l > 3 {
-            let tmp : i32 = i.parse() ;
-            ret.push(tmp);
-        }
-        l+=1;
-    }
-    ret
-}
-*/
-//useless tests,but ... >_>
+
 #[cfg(test)]
 mod tests {
     use parse_args;
     use ArgumentType;
     #[test]
-    #[should_panic]
-    fn test_argparser_panic_arglen() {
-        let test_argument = "help".to_string();
-        parse_args(vec![test_argument]);
-    }
-    #[test]
-    fn test_argparser_parses_help() {
-        match parse_args(vec!["mvm".to_string(), "help".to_string()]).type_class1 {
+    fn command_parser_parses_help() {
+        match parse_args(vec![String::from("mvm"), String::from("help")]).type_class1 {
             ArgumentType::PrintHelp => {}
-            ArgumentType::PrintVersion => panic!("argparser mistake help as version"),
-            ArgumentType::ExecuteProgram => panic!("argparser mistake help as run"),
+            _ => panic!(),
         }
     }
     #[test]
-    fn test_argparser_help_on_inputwrong() {
-        match parse_args(vec!["mvm".to_string(), "foo".to_string()]).type_class1 {
-            ArgumentType::PrintHelp => {}
-            _ => panic!("argparser doesn't print help when input wrong"),
+    fn command_parser_parses_version() {
+        match parse_args(vec![String::from("mvm"), String::from("version")]).type_class1 {
+            ArgumentType::PrintVersion => {}
+            _ => panic!(),
         }
-    }
-    #[test]
-    #[should_panic]
-    fn test_argparser_parses_run() {
-        parse_args(vec!["mvm".to_string(), "run".to_string()]);
-    }
-    #[test]
-    fn can_execute_hprog() {
-        use vm::execute_program;
-        let prog = "
-:point_right: 2 //tag 2
-//simple line comment
-:poultry_leg: //get input
-:question::mailbox_with_no_mail::monkey: 3
-:monkey_face: //add one
-:hankey: //output
-:point_right: 3 //exit tag
-";
-        execute_program(prog, vec![0, 3, -1, 21, 3, 2]);
     }
 }
 fn parse_args(args: Vec<String>) -> Argument {
     if args.len() >= 2 {
     } else {
-        panic!(
-            "Error: wrong of number argument({} given,1+ expected),use '{} help'to print help",
+        println!(
+            "WARN: wrong of number argument({} given,1+ expected),use '{} help'to print help",
             args.len(),
             args[0]
         );
+        exit(1);
+
     }
     match args[1].as_str() {
-        "help" => Argument::new(ArgumentType::PrintHelp),
-        "version" => Argument::new(ArgumentType::PrintVersion),
-        "run" => {
+        "help" | "h" => Argument::new(ArgumentType::PrintHelp),
+        "version" | "v" => Argument::new(ArgumentType::PrintVersion),
+        "run" | "r" => {
             if args.len() < 3 {
-                panic!("Error: please give a file to run");
+                println!("Error: please give a file to run");
+                exit(1);
             }
             if let Ok(f) = File::open(&args[2]) {
                 let mut ret = Argument::new(ArgumentType::ExecuteProgram);
                 ret.put_file(f);
                 ret
             } else {
-                println!("Error: can't open file");
-                unreachable!();
+                println!("Error: can't open file '{}'", args[2]);
+                exit(1);
             }
         }
         _ => Argument::new(ArgumentType::PrintHelp),
@@ -159,12 +143,8 @@ impl Argument {
     fn put_file(&mut self, file: File) {
         self.file = Some(file);
     }
-    fn get_file(&self) -> &File {
-        if let Some(ref f) = self.file {
-            f
-        } else {
-            panic!("Failed to unpack Option<File>");
-        }
+    fn get_file(self) -> File {
+        self.file.unwrap()
     }
 }
 

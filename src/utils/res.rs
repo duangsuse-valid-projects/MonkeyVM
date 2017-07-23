@@ -1,12 +1,11 @@
-//use std::slice::Iter;
 use utils::memory;
 use utils::res::HDataTypes::*;
 
 #[derive(Debug)]
 pub enum HCommands {
-    RED, //read memory to x , :eyes:
-    RAD, //read memory,add one, write to x ::
-    RSB, //read memory,sub one, write to x ::
+    RED, //read memory to x
+    RAD, //read memory,add one, write back
+    RSB, //read memory,sub one, write back
     SUB, //sub x
     ADD, //plus one to x
     WRT, //write x to memory
@@ -38,20 +37,7 @@ impl HCommands {
             &HCommands::WRT => ":memo:",
         }
     }
-    /* Bad lifetime
-    pub fn from_str<'a>(&'a self, cmd_str: &'a str) -> Option<&'a HCommands> {
-        let tmp = Hcmd_as_array();
-        let tmp_iter = tmp.iter();
-        for i in tmp_iter {
-            if i.to_str() == cmd_str {
-                return Some(i);
-            }
-        }
-        None
-    }
-    */
 
-    //Lifetime bad guy.... go study lifetime...
     #[allow(unused)]
     pub fn from_str(&self, cmd_str: &str) -> Option<HCommands> {
         if cmd_str == HCommands::SUB.to_str() {
@@ -117,7 +103,7 @@ mod tests {
     #[test]
     fn command_parser_works() {
         let command_str = ":see_no_evil:";
-        let cmd = HCommands::ADD; //Bad Lifetime
+        let cmd = HCommands::ADD;
         let cmd_o = cmd.from_str(command_str).unwrap();
         match cmd_o {
             HCommands::SUB => {}
@@ -127,7 +113,7 @@ mod tests {
     #[test]
     fn command_parser_none_on_input_worng() {
         let command_str = ":bad_command:";
-        let cmd = HCommands::ADD; //Bad Lifetime
+        let cmd = HCommands::ADD;
         let cmd_o = cmd.from_str(command_str);
         match cmd_o {
             None => {}
@@ -145,55 +131,4 @@ impl HDataTypes {
             Nil => panic!("attempt to get value on a Nil value"),
         }
     }
-    //TODO useless,should be cleand up before release.
-    /*pub fn get_meta(self) -> WorkAroundPasser {
-        match self {
-            NumLiteral(x) => WorkAroundPasser::new(WorkAroundPasserType::NumL, x),
-            Pointer(x) => WorkAroundPasser::new(WorkAroundPasserType::Ptr, x as i32),
-            IndirectPointer(x) => WorkAroundPasser::new(WorkAroundPasserType::IPtr, x as i32),
-            Nil => WorkAroundPasser::new(WorkAroundPasserType::N, 0),
-        }
-    }*/
 }
-/*
-#[derive(Debug)]
-pub struct WorkAroundPasser {
-    pub Type: WorkAroundPasserType,
-    pub value: i32,
-}
-impl WorkAroundPasser {
-    pub fn new(tp: WorkAroundPasserType, val: i32) -> WorkAroundPasser {
-        WorkAroundPasser {
-            Type: tp,
-            value: val,
-        }
-    }
-}
-*/
-/*#[derive(Debug)]
-pub enum WorkAroundPasserType {
-    N,
-    NumL,
-    Ptr,
-    IPtr,
-}*/
-/*
-pub fn Hcmd_as_array() -> [HCommands; 14] {
-    [
-        HCommands::ADD,
-        HCommands::AO,
-        HCommands::I,
-        HCommands::JMP,
-        HCommands::O,
-        HCommands::QNJ,
-        HCommands::QNU,
-        HCommands::QPJ,
-        HCommands::QZJ,
-        HCommands::RAD,
-        HCommands::RED,
-        HCommands::RSB,
-        HCommands::SUB,
-        HCommands::WRT,
-    ]
-}
-*/
