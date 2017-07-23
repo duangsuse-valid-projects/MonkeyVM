@@ -142,7 +142,7 @@ impl HDataTypes {
             NumLiteral(x) => x,
             Pointer(x) => hmem.get_cell(x),
             IndirectPointer(x) => hmem.get_cell_indirect(x),
-            Nil => unreachable!(),
+            Nil => panic!("attempt to get value on a Nil value"),
         }
     }
     //TODO useless,should be cleand up before release.

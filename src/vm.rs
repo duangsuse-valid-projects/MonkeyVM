@@ -269,6 +269,7 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                     }
                     HDataTypes::IndirectPointer(p) => {
                         let val = &mem.get_cell_indirect(p) + 1;
+                        println!("putting {} to #{}", val, p);
                         &mem.put_cell_indirect(p, val);
                     } 
                     HDataTypes::NumLiteral(_) => {
@@ -314,14 +315,29 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>) -> PResult {
                 }
             }
             &HCommands::WRT => {
-                let ptr = data_current.get_value(&mem) as usize;
-                mem.put_cell(ptr, x.unwrap_or(0));
+                match data_current {
+                    HDataTypes::Pointer(p) => {
+                        let val = x.unwrap_or(0);
+                        &mem.put_cell(p, *val);
+                    }
+                    HDataTypes::IndirectPointer(p) => {
+                        let val = x.unwrap_or(0);
+                        &mem.put_cell_indirect(p, *val);
+                    } 
+                    HDataTypes::NumLiteral(_) => {
+                        println!("WARN: trying to Write without pointer {}", ln)
+                    }
+                    HDataTypes::Nil => {
+                        println!("WARN: trying to Write without any param near {}", ln)
+                    }
+                }
             }
         }
         if noplusline {
             noplusline = false;
         } else {
             ln += 1;
+            //println!("{}",&mem.pretty());
         }
         if jumps_t > 900000 {
             use std::io::{stdin, Read};

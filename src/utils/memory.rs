@@ -63,11 +63,22 @@ impl Hmem {
     }
     pub fn put_cell_indirect(&mut self, pointer: usize, value: CellType) {
         let ptr = self.cell_points_to(pointer);
+        //println!("put {} to #{}",value,ptr);
         self.put_cell(ptr, value);
     }
     fn cell_points_to(&self, cell: usize) -> usize {
+        use utils::error::Presult;
         let cell_contains = self.get_cell(cell);
-        check_idpointer_validate(cell_contains).unwrap();
+        match check_idpointer_validate(cell_contains) {
+            Presult::Err => {
+                panic!(
+                    "fatal: cell points_to failed: #{}:{} isn't a valid pointer",
+                    cell,
+                    cell_contains
+                )
+            }
+            Presult::Ok => {}
+        }
         cell_contains as usize
     }
     pub fn pretty(&self) -> String {

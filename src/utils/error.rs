@@ -19,6 +19,7 @@ pub enum Presult {
     Err,
 }
 impl Presult {
+    #[allow(dead_code)]
     pub fn unwrap(self) {
         match self {
             Presult::Ok => {}
