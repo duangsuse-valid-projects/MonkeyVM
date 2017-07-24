@@ -610,7 +610,7 @@ impl TagManager {
     pub fn locate_print_tail_tag(&self, len: usize) {
         for t in &self.tags {
             if t.get_lo() as usize > len {
-                println!(":point_rigth: {}", t.get_id());
+                println!(":point_right: {}", t.get_id());
             }
         }
     }
