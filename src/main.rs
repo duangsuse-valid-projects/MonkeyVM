@@ -10,7 +10,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.2.1";
+const VERSION: &str = "0.2.2";
 
 fn main() {
     let commandline = args().collect();
@@ -37,6 +37,8 @@ Usage:
 {} help|h to print help
 {} version|v to print version
 {} run|r [file]  to execute a program
+{} beautify|b to beautify a program
+{} parse|p to parse a program
 
 Environment variables:
 PARGS -> ',' splited hprog arguments
@@ -44,6 +46,8 @@ PDBG=1 -> Debug mode (higest verbose level)
 PVBS=1 -> Verbose (output when memory change,etc.)
 get source code at https://coding.net",
                 VERSION,
+                binary_path,
+                binary_path,
                 binary_path,
                 binary_path,
                 binary_path
@@ -55,6 +59,32 @@ get source code at https://coding.net",
             arg.get_file().read_to_string(&mut program_text).unwrap();
             let pargs: Vec<i32> = parsepargs();
             vm::execute_program(program_text.as_str(), pargs, verbose, debug);
+        }
+        ArgumentType::ParseProgram => {
+            use parser::parse_program;
+            let mut program_text: String = String::new();
+            arg.get_file().read_to_string(&mut program_text).unwrap();
+            let parsed = parse_program(program_text.as_str(), verbose, debug);
+            println!("--CMD--DAT--");
+            let end = parsed.CMD.len() - 1;
+            for i in 0..end {
+                println!("--{:?}--{:?}--", parsed.CMD[i], parsed.DAT[i]);
+            }
+            println!(".............");
+            println!("--TAG--LOC--");
+            parsed.Tags.print_fmt();
+        }
+        ArgumentType::BeautifyProgram => {
+            use parser::parse_program;
+            let mut program_text: String = String::new();
+            arg.get_file().read_to_string(&mut program_text).unwrap();
+            let parsed = parse_program(program_text.as_str(), verbose, debug);
+            println!("//beautified by MonkeyVM v{}", VERSION);
+            let end = parsed.CMD.len() - 1;
+            for i in 0..end {
+                parsed.Tags.locate_print_reverse(i);
+                println!("{}{}", parsed.CMD[i].to_str(), parsed.DAT[i].to_str());
+            }
         }
     }
 }
@@ -125,6 +155,34 @@ fn parse_args(args: Vec<String>) -> Argument {
                 exit(1);
             }
         }
+        "parse" | "p" => {
+            if args.len() < 3 {
+                println!("Error: please give a file to parse");
+                exit(1);
+            }
+            if let Ok(f) = File::open(&args[2]) {
+                let mut ret = Argument::new(ArgumentType::ParseProgram);
+                ret.put_file(f);
+                ret
+            } else {
+                println!("Error: can't open file '{}'", args[2]);
+                exit(1);
+            }
+        }
+        "beautify" | "b" => {
+            if args.len() < 3 {
+                println!("Error: please give a file to beautify");
+                exit(1);
+            }
+            if let Ok(f) = File::open(&args[2]) {
+                let mut ret = Argument::new(ArgumentType::BeautifyProgram);
+                ret.put_file(f);
+                ret
+            } else {
+                println!("Error: can't open file '{}'", args[2]);
+                exit(1);
+            }
+        }
         _ => Argument::new(ArgumentType::PrintHelp),
     }
 }
@@ -154,4 +212,6 @@ enum ArgumentType {
     PrintVersion,
     PrintHelp,
     ExecuteProgram,
+    ParseProgram,
+    BeautifyProgram,
 }

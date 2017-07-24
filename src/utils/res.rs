@@ -131,4 +131,12 @@ impl HDataTypes {
             Nil => panic!("attempt to get value on a Nil value"),
         }
     }
+    pub fn to_str(&self) -> String {
+        match self {
+            &NumLiteral(x) => format!("{}", x),
+            &Pointer(x) => format!(":point_right:{}", x),
+            &IndirectPointer(x) => format!(":point_right:{}:point_right:", x),
+            &Nil => String::new(),
+        }
+    }
 }

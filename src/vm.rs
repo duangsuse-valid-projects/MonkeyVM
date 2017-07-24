@@ -600,8 +600,20 @@ impl TagManager {
             Some(self.tags[n].get_lo())
         }
     }
+    pub fn locate_print_reverse(&self, lo: usize) {
+        for t in &self.tags {
+            if t.get_lo() as usize == lo {
+                println!(":point_right: {}", t.get_id());
+            }
+        }
+    }
     pub fn add_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
+    }
+    pub fn print_fmt(self) {
+        for t in self.tags {
+            println!("--{}--{}--", t.get_id(), t.get_lo());
+        }
     }
 }
 
