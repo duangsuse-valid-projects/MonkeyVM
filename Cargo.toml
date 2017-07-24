@@ -3,5 +3,6 @@ name = "monkey_vm"
 description = "simple tool for running monkey-lang programs"
 version = "0.2.3"
 authors = ["duangsuse <fedora-opensuse@outlook.com>"]
+license = "gplv3"
 
 [dependencies]

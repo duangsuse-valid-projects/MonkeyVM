@@ -36,9 +36,10 @@ a tool for running coding's monkey-lang code
 Usage:
 {} help|h to print help
 {} version|v to print version
+{} licence|l to view licence
 {} run|r [file]  to execute a program
-{} beautify|b to beautify a program
-{} parse|p to parse a program
+{} beautify|b [file] to beautify a program
+{} parse|p [file] to parse a program
 
 Environment variables:
 PARGS -> ',' splited hprog arguments
@@ -50,10 +51,18 @@ get source code at https://coding.net",
                 binary_path,
                 binary_path,
                 binary_path,
+                binary_path,
                 binary_path
             );
         }
         ArgumentType::PrintVersion => println!("{}", VERSION),
+        ArgumentType::PrintLicence => {
+            println!(
+                "MonkeyVM 是自由软件；您可以在自由软件基金会发布的 GNU 通用公共许可证下重新发布或修改它；许可证应使用第三版本或您所选择的更新的版本。
+发布 MonkeyVM 的目的是希望它能够在一定程度上帮到您。但我们并不为它提供任何形式的担保，也无法保证它可以在特定用途中得到您希望的结果。请参看 GNU GPL 许可中的更多细节。
+您应该在收到 MonkeyVM 的同时收到了 GNU 通用公共许可证的副本；如果您没有收到，请查看 <http://www.gnu.org/licenses/>。"
+            )
+        }
         ArgumentType::ExecuteProgram => {
             let mut program_text: String = String::new();
             arg.get_file().read_to_string(&mut program_text).unwrap();
@@ -184,6 +193,7 @@ fn parse_args(args: Vec<String>) -> Argument {
                 exit(1);
             }
         }
+        "licence" | "l" => Argument::new(ArgumentType::PrintLicence),
         _ => Argument::new(ArgumentType::PrintHelp),
     }
 }
@@ -212,6 +222,7 @@ impl Argument {
 enum ArgumentType {
     PrintVersion,
     PrintHelp,
+    PrintLicence,
     ExecuteProgram,
     ParseProgram,
     BeautifyProgram,
