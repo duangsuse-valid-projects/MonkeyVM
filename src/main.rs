@@ -10,7 +10,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.2.3";
+const VERSION: &str = "0.2.4";
 
 fn main() {
     let commandline = args().collect();
@@ -32,20 +32,20 @@ fn main() {
             let binary_path: String = args().next().unwrap_or(String::from("mvm"));
             println!(
                 "MonkeyVM v{}
-a tool for running coding's monkey-lang code
+a tool for running coding monkey-lang code
 Usage:
-{} help|h to print help
-{} version|v to print version
-{} licence|l to view licence
-{} run|r [file]  to execute a program
-{} beautify|b [file] to beautify a program
-{} parse|p [file] to parse a program
+{} help|h print help
+{} version|v print version
+{} licence|l view licence
+{} run|r [file] execute a program
+{} beautify|b [file] beautify a program
+{} parse|p [file] parse a program
 
 Environment variables:
 PARGS -> ',' splited hprog arguments
 PDBG=1 -> Debug mode (higest verbose level)
 PVBS=1 -> Verbose (output when memory change,etc.)
-get source code at https://coding.net",
+get source code on https://coding.net",
                 VERSION,
                 binary_path,
                 binary_path,
@@ -75,7 +75,7 @@ get source code at https://coding.net",
             arg.get_file().read_to_string(&mut program_text).unwrap();
             let parsed = parse_program(program_text.as_str(), verbose, debug);
             println!("ln--CMD--DAT--");
-            let end = parsed.CMD.len() - 1;
+            let end = parsed.CMD.len();
             for i in 0..end {
                 println!("{}--{:?}--{:?}--", i, parsed.CMD[i], parsed.DAT[i]);
             }
@@ -89,12 +89,12 @@ get source code at https://coding.net",
             arg.get_file().read_to_string(&mut program_text).unwrap();
             let parsed = parse_program(program_text.as_str(), verbose, debug);
             println!("//beautified by MonkeyVM v{}", VERSION);
-            let end = parsed.CMD.len() - 1;
+            let end = parsed.CMD.len();
             for i in 0..end {
                 parsed.Tags.locate_print_reverse(i);
                 println!("{}{}", parsed.CMD[i].to_str(), parsed.DAT[i].to_str());
             }
-            parsed.Tags.locate_print_tail_tag(parsed.CMD.len() - 1);
+            parsed.Tags.locate_print_tail_tag(parsed.CMD.len());
         }
     }
 }

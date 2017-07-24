@@ -406,11 +406,11 @@ fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -
             ln += 1;
         }
         if jumps_t > 900000 {
-            use std::io::{stdin, Read};
-            println!("monkey got *really* tired,contiue simulate? [Return/*]");
-            let mut user_input = [0u8];
-            stdin().read(&mut user_input).unwrap();
-            if user_input[0] == b'\n' {
+            use std::io::stdin;
+            println!("monkey got *really* tired,contiue simulate? [y/n]");
+            let mut user_input = String::new();
+            stdin().read_line(&mut user_input).unwrap();
+            if user_input.trim() == "y" {
                 println!("contiue. resetting total jumps: {}", jumps_t + jumps);
                 jumps = 0;
                 jumps_t = 0;

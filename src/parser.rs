@@ -167,7 +167,7 @@ fn parse_line(ln: &usize, line: &str, target: &mut MonkeyAST, debug: bool) {
         target.CMD.push(HCommands::WRT);
         target.DAT.push(datparse(HCommands::WRT, line, ln));
     } else {
-        println!("fatal: can not parse command at line {}", ln + 1);
+        println!("fatal: cannot parse command at line {}", ln + 1);
         exit(2);
     }
 }
