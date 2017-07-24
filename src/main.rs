@@ -10,7 +10,7 @@ mod vm;
 mod parser;
 mod utils;
 
-const VERSION: &str = "0.2.2";
+const VERSION: &str = "0.2.3";
 
 fn main() {
     let commandline = args().collect();
@@ -65,10 +65,10 @@ get source code at https://coding.net",
             let mut program_text: String = String::new();
             arg.get_file().read_to_string(&mut program_text).unwrap();
             let parsed = parse_program(program_text.as_str(), verbose, debug);
-            println!("--CMD--DAT--");
+            println!("ln--CMD--DAT--");
             let end = parsed.CMD.len() - 1;
             for i in 0..end {
-                println!("--{:?}--{:?}--", parsed.CMD[i], parsed.DAT[i]);
+                println!("{}--{:?}--{:?}--", i, parsed.CMD[i], parsed.DAT[i]);
             }
             println!(".............");
             println!("--TAG--LOC--");
@@ -85,6 +85,7 @@ get source code at https://coding.net",
                 parsed.Tags.locate_print_reverse(i);
                 println!("{}{}", parsed.CMD[i].to_str(), parsed.DAT[i].to_str());
             }
+            parsed.Tags.locate_print_tail_tag(parsed.CMD.len() - 1);
         }
     }
 }

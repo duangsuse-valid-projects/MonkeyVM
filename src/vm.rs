@@ -53,7 +53,7 @@ mod tests_proc {
         test_hprog.CMD.push(HCommands::O);
         test_hprog.DAT.push(HDataTypes::Nil);
         let r = do_emulate(test_hprog, vec![], false, false);
-        assert_eq!(r.get_num()[0], 11);
+        assert_eq!(r.get_num()[0], 9);
     }
 
     #[test]
@@ -604,6 +604,13 @@ impl TagManager {
         for t in &self.tags {
             if t.get_lo() as usize == lo {
                 println!(":point_right: {}", t.get_id());
+            }
+        }
+    }
+    pub fn locate_print_tail_tag(&self, len: usize) {
+        for t in &self.tags {
+            if t.get_lo() as usize > len {
+                println!(":point_rigth: {}", t.get_id());
             }
         }
     }
