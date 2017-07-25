@@ -248,7 +248,7 @@ get source code on https://coding.net",
                     }
                     f.write(&zip_numeric(t.get_lo())).unwrap();
                 }
-                for t in &parsed.Tags.locate_get_tail_tag(cmdlen - 1) {
+                for t in &parsed.Tags.locate_get_tail_tag(cmdlen) {
                     if t.get_id() >= 0 {
                         if debug {
                             println!("writing tag id positive sigure 1...");
