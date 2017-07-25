@@ -196,6 +196,61 @@ fn datparse(cmdtpe: HCommands, line: &str, ln: &usize) -> HDataTypes {
     }
 }
 
+#[cfg(test)]
+mod bin_util_works {
+    #[test]
+    fn numeric_zipper() {
+        use parser::{zip_numeric, unzip_numeric};
+        let mut tmp = zip_numeric(12123);
+        assert_eq!(unzip_numeric(tmp), Some(12123));
+        tmp = zip_numeric(12123);
+        assert_eq!(unzip_numeric(tmp), Some(12123));
+        tmp = zip_numeric(1323423);
+        assert_eq!(unzip_numeric(tmp), Some(1323423));
+        tmp = zip_numeric(1);
+        assert_eq!(unzip_numeric(tmp), Some(1));
+    }
+}
+
+pub fn zip_numeric(numeric: u32) -> [u8; 32] {
+    let mut ret = [0u8; 32];
+    let tmp: Vec<u8>;
+    unsafe {
+        let mut atemp = format!("{}", numeric);
+        let temp = atemp.as_mut_vec();
+        tmp = temp.to_vec();
+    }
+    let mut ptr = 0usize;
+    for c in tmp {
+        ret[ptr] = (c as char) as u8;
+        ptr += 1;
+    }
+    ret
+}
+pub fn unzip_numeric(from: [u8; 32]) -> Option<u32> {
+    let mut tmp = String::new();
+    for b in from.iter() {
+        let cur = *b as char;
+        match cur {
+            '1' => tmp.push('1'),
+            '2' => tmp.push('2'),
+            '3' => tmp.push('3'),
+            '4' => tmp.push('4'),
+            '5' => tmp.push('5'),
+            '6' => tmp.push('6'),
+            '7' => tmp.push('7'),
+            '8' => tmp.push('8'),
+            '9' => tmp.push('9'),
+            '0' => tmp.push('0'),
+            _ => {}
+        }
+    }
+    match tmp.parse::<u32>() {
+        Ok(t) => Some(t),
+        Err(_) => None,
+    }
+}
+
 //use array instead of vector for benchmark(higer performace).
 #[derive(Debug)]
 #[allow(non_snake_case)]

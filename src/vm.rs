@@ -142,7 +142,7 @@ fn borrow_data(dat: &HDataTypes) -> HDataTypes {
 }
 
 //emulate hlang program with memory
-fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -> PResult {
+pub fn do_emulate(hast: MonkeyAST, arg: Vec<CellType>, verbose: bool, debug: bool) -> PResult {
     let mut ln = 0usize;
     let mut presult = PResult::new();
     let mut x: Option<CellType> = None;
@@ -577,7 +577,7 @@ impl Tag {
 }
 #[derive(Debug)]
 pub struct TagManager {
-    tags: Vec<Tag>,
+    pub tags: Vec<Tag>,
 }
 impl TagManager {
     pub fn new() -> TagManager {
@@ -614,6 +614,21 @@ impl TagManager {
             }
         }
     }
+
+    pub fn locate_get_tail_tag(&self, len: usize) -> Vec<Tag> {
+        let mut ret = Vec::<Tag>::new();
+        let mut id_tmp: i32;
+        for t in &self.tags {
+            if t.get_lo() as usize > len {
+                let mut tmp = format!("{}", t.get_id());
+                id_tmp = tmp.parse::<i32>().unwrap();
+                tmp = format!("{}", t.get_lo());
+                ret.push(Tag::new(id_tmp, tmp.parse::<u32>().unwrap()));
+            }
+        }
+        ret
+    }
+
     pub fn add_tag(&mut self, tag: Tag) {
         self.tags.push(tag);
     }

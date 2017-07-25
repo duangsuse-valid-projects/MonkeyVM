@@ -37,6 +37,24 @@ impl HCommands {
             &HCommands::WRT => ":memo:",
         }
     }
+    pub fn to_u8(&self) -> u8 {
+        match self {
+            &HCommands::ADD => 1,
+            &HCommands::AO => 2,
+            &HCommands::I => 3,
+            &HCommands::JMP => 4,
+            &HCommands::O => 5,
+            &HCommands::QNJ => 6,
+            &HCommands::QNU => 7,
+            &HCommands::QPJ => 8,
+            &HCommands::QZJ => 9,
+            &HCommands::RAD => 10,
+            &HCommands::RED => 11,
+            &HCommands::RSB => 12,
+            &HCommands::SUB => 13,
+            &HCommands::WRT => 14,
+        }
+    }
 
     #[allow(unused)]
     pub fn from_str(&self, cmd_str: &str) -> Option<HCommands> {
